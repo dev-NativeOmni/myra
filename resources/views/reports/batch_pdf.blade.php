@@ -73,6 +73,11 @@
 </head>
 <body>
 
+@php
+    $logoImage = $institution->imageDataUri('logo_path');
+    $stampImage = $institution->imageDataUri('stamp_path');
+    $signatureImage = $institution->imageDataUri('signature_path');
+@endphp
 @foreach($reports as $report)
     @php
         $student = $report->student;
@@ -89,8 +94,8 @@
     <div class="{{ !$loop->last ? 'page-break' : '' }}">
         <!-- Header / Kop -->
         <div class="text-center">
-            @if($institution->logo_path)
-                <img src="{{ public_path('storage/' . $institution->logo_path) }}" class="kop-logo">
+            @if($logoImage)
+                <img src="{{ $logoImage }}" class="kop-logo">
             @endif
             <div class="kop-title">LAPORAN BULANAN</div>
             <div class="kop-inst uppercase">{{ $institution->name }}</div>
@@ -219,11 +224,11 @@
                         <div style="margin-top: 1px;">{{ $institution->director_title }}</div>
                         
                         <div class="sign-area">
-                            @if($institution->stamp_path)
-                                <img src="{{ public_path('storage/' . $institution->stamp_path) }}" class="sign-stamp">
+                            @if($stampImage)
+                                <img src="{{ $stampImage }}" class="sign-stamp">
                             @endif
-                            @if($institution->signature_path)
-                                <img src="{{ public_path('storage/' . $institution->signature_path) }}" class="sign-signature">
+                            @if($signatureImage)
+                                <img src="{{ $signatureImage }}" class="sign-signature">
                             @endif
                         </div>
                         

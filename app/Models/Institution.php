@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class Institution extends Model
 {
@@ -39,6 +40,36 @@ class Institution extends Model
     protected static function booted(): void
     {
         static::saved(fn () => Cache::forget('institution:current:attributes'));
+    }
+
+    /**
+     * Public URL of an uploaded branding image, or null when none is set.
+     *
+     * @param  'logo_path'|'stamp_path'|'signature_path'  $attribute
+     */
+    public function imageUrl(string $attribute): ?string
+    {
+        $path = $this->{$attribute};
+
+        return $path ? Storage::disk(config('filesystems.uploads'))->url($path) : null;
+    }
+
+    /**
+     * Uploaded branding image as a data URI, so dompdf can embed it
+     * regardless of which disk (local or Supabase Storage) holds the file.
+     *
+     * @param  'logo_path'|'stamp_path'|'signature_path'  $attribute
+     */
+    public function imageDataUri(string $attribute): ?string
+    {
+        $path = $this->{$attribute};
+        $disk = Storage::disk(config('filesystems.uploads'));
+
+        if (! $path || ! $disk->exists($path)) {
+            return null;
+        }
+
+        return 'data:'.$disk->mimeType($path).';base64,'.base64_encode($disk->get($path));
     }
 
     /**

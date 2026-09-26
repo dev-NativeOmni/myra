@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Classroom;
+use App\Models\Institution;
 use App\Models\MonthlyReport;
 use App\Models\Student;
 use App\Models\User;
@@ -44,7 +45,7 @@ class MasterDataTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Pengaturan Profil Lembaga');
 
-        $logo = UploadedFile::fake()->image('logo.png');
+        $logo = UploadedFile::fake()->image('logo.jpg');
 
         $updateResponse = $this->actingAs($this->user)->put(route('institution.update'), [
             'name' => 'PONDOK PESANTREN CONTOH UPDATED',
@@ -67,6 +68,79 @@ class MasterDataTest extends TestCase
             'director_title' => 'Mudir Pesantren',
             'accent_color' => '#10b981',
         ]);
+    }
+
+    public function test_institution_logo_is_stored_on_configured_uploads_disk(): void
+    {
+        config(['filesystems.uploads' => 's3']);
+        Storage::fake('s3');
+
+        $this->actingAs($this->user)->put(route('institution.update'), [
+            ...$this->validInstitutionPayload(),
+            'logo' => UploadedFile::fake()->image('logo.jpg'),
+        ]);
+
+        Storage::disk('s3')->assertExists(Institution::first()->logo_path);
+    }
+
+    public function test_institution_update_rejects_png_logo(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs($this->user)->put(route('institution.update'), [
+            ...$this->validInstitutionPayload(),
+            'logo' => UploadedFile::fake()->image('logo.png'),
+        ]);
+
+        $response->assertSessionHasErrors('logo');
+        $this->assertSame([], Storage::disk('public')->allFiles());
+    }
+
+    public function test_institution_image_data_uri_embeds_uploaded_file(): void
+    {
+        Storage::fake('public');
+        $jpegBytes = UploadedFile::fake()->image('stamp.jpg')->getContent();
+        Storage::disk('public')->put('institutions/stamp.jpg', $jpegBytes);
+        $institution = new Institution(['stamp_path' => 'institutions/stamp.jpg']);
+
+        $dataUri = $institution->imageDataUri('stamp_path');
+
+        $this->assertSame('data:image/jpeg;base64,'.base64_encode($jpegBytes), $dataUri);
+    }
+
+    public function test_institution_image_data_uri_is_null_without_upload(): void
+    {
+        Storage::fake('public');
+        $institution = new Institution(['stamp_path' => 'institutions/missing.jpg']);
+
+        $this->assertNull($institution->imageDataUri('stamp_path'));
+        $this->assertNull($institution->imageDataUri('logo_path'));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function validInstitutionPayload(): array
+    {
+        return [
+            'name' => 'PONDOK PESANTREN CONTOH',
+            'city' => 'KOTA CONTOH',
+            'director_name' => 'Ust. Fulan, S.Pd.',
+            'director_title' => 'Mudir Pesantren',
+            'accent_color' => '#10b981',
+            'term_student' => 'Santri',
+            'term_teacher' => 'Guru',
+            'term_class' => 'Kelas',
+        ];
+    }
+
+    public function test_student_search_ignores_letter_case(): void
+    {
+        $student = Student::first();
+
+        $response = $this->actingAs($this->user)->get(route('students.index', ['search' => mb_strtolower($student->name)]));
+
+        $response->assertSee($student->name);
     }
 
     public function test_classroom_crud(): void

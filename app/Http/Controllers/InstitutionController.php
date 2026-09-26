@@ -46,32 +46,22 @@ class InstitutionController extends Controller
             'term_student' => 'required|in:Santri,Siswa',
             'term_teacher' => 'required|in:Guru,Musyrif',
             'term_class' => 'required|in:Kelas,Halaqah',
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
-            'stamp' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
-            'signature' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
+            'logo' => 'nullable|image|mimes:jpg,jpeg|max:2048',
+            'stamp' => 'nullable|image|mimes:jpg,jpeg|max:2048',
+            'signature' => 'nullable|image|mimes:jpg,jpeg|max:2048',
         ]);
 
         $institution = Institution::first() ?? new Institution;
 
-        if ($request->hasFile('logo')) {
-            if ($institution->logo_path) {
-                Storage::disk('public')->delete($institution->logo_path);
-            }
-            $validated['logo_path'] = $request->file('logo')->store('institutions', 'public');
-        }
+        $disk = Storage::disk(config('filesystems.uploads'));
 
-        if ($request->hasFile('stamp')) {
-            if ($institution->stamp_path) {
-                Storage::disk('public')->delete($institution->stamp_path);
+        foreach (['logo', 'stamp', 'signature'] as $field) {
+            if ($request->hasFile($field)) {
+                if ($institution->{"{$field}_path"}) {
+                    $disk->delete($institution->{"{$field}_path"});
+                }
+                $validated["{$field}_path"] = $request->file($field)->store('institutions', config('filesystems.uploads'));
             }
-            $validated['stamp_path'] = $request->file('stamp')->store('institutions', 'public');
-        }
-
-        if ($request->hasFile('signature')) {
-            if ($institution->signature_path) {
-                Storage::disk('public')->delete($institution->signature_path);
-            }
-            $validated['signature_path'] = $request->file('signature')->store('institutions', 'public');
         }
 
         $institution->fill($validated);

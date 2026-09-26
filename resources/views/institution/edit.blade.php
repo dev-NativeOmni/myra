@@ -119,8 +119,8 @@
 
     <!-- Card 4: Aset Visual White-Label (Upload) -->
     <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
-        <h2 class="text-base font-bold text-slate-900 mb-1">Aset Visual Dokumen (PNG Transparan)</h2>
-        <p class="text-xs text-slate-500 mb-6">Format disarankan file gambar PNG transparan (maks. 2 MB per file).</p>
+        <h2 class="text-base font-bold text-slate-900 mb-1">Aset Visual Dokumen</h2>
+        <p class="text-xs text-slate-500 mb-6">Boleh pilih PNG, JPG, atau WebP (maks. 2 MB per file). File otomatis diubah ke JPG berlatar putih agar bisa dicetak di rapor PDF.</p>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <!-- Logo -->
@@ -131,12 +131,12 @@
                     
                     @if($institution->logo_path)
                         <div class="mb-3 p-2 bg-white rounded-lg border border-slate-200 text-center">
-                            <img src="{{ asset('storage/' . $institution->logo_path) }}" alt="Logo" class="max-h-16 mx-auto object-contain">
+                            <img src="{{ $institution->imageUrl('logo_path') }}" alt="Logo" class="max-h-16 mx-auto object-contain">
                         </div>
                     @endif
                 </div>
 
-                <input type="file" name="logo" accept="image/png,image/jpeg,image/webp"
+                <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" data-convert-to-jpeg
                     class="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
             </div>
 
@@ -144,16 +144,16 @@
             <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between">
                 <div>
                     <label class="block text-xs font-semibold text-slate-800 mb-1">2. Stempel / Cap Resmi</label>
-                    <p class="text-[11px] text-slate-500 mb-3">Di-overlay di atas tanda tangan digital.</p>
+                    <p class="text-[11px] text-slate-500 mb-3">Tampil di sisi kiri area tanda tangan.</p>
                     
                     @if($institution->stamp_path)
                         <div class="mb-3 p-2 bg-white rounded-lg border border-slate-200 text-center">
-                            <img src="{{ asset('storage/' . $institution->stamp_path) }}" alt="Stempel" class="max-h-16 mx-auto object-contain">
+                            <img src="{{ $institution->imageUrl('stamp_path') }}" alt="Stempel" class="max-h-16 mx-auto object-contain">
                         </div>
                     @endif
                 </div>
 
-                <input type="file" name="stamp" accept="image/png,image/jpeg,image/webp"
+                <input type="file" name="stamp" accept="image/png,image/jpeg,image/webp" data-convert-to-jpeg
                     class="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
             </div>
 
@@ -161,16 +161,16 @@
             <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between">
                 <div>
                     <label class="block text-xs font-semibold text-slate-800 mb-1">3. Tanda Tangan Pimpinan</label>
-                    <p class="text-[11px] text-slate-500 mb-3">Tanda tangan digital transparan.</p>
+                    <p class="text-[11px] text-slate-500 mb-3">Tanda tangan digital pimpinan.</p>
                     
                     @if($institution->signature_path)
                         <div class="mb-3 p-2 bg-white rounded-lg border border-slate-200 text-center">
-                            <img src="{{ asset('storage/' . $institution->signature_path) }}" alt="Tanda Tangan" class="max-h-16 mx-auto object-contain">
+                            <img src="{{ $institution->imageUrl('signature_path') }}" alt="Tanda Tangan" class="max-h-16 mx-auto object-contain">
                         </div>
                     @endif
                 </div>
 
-                <input type="file" name="signature" accept="image/png,image/jpeg,image/webp"
+                <input type="file" name="signature" accept="image/png,image/jpeg,image/webp" data-convert-to-jpeg
                     class="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer">
             </div>
         </div>
@@ -183,5 +183,35 @@
         </button>
     </div>
 </form>
+
+<script>
+    /**
+     * The serverless PDF renderer has no GD extension, so it can only embed JPEG images.
+     * Convert PNG/WebP uploads to JPEG on a white background before the form is sent.
+     */
+    document.querySelectorAll('input[data-convert-to-jpeg]').forEach((input) => {
+        input.addEventListener('change', async () => {
+            const file = input.files[0];
+            if (!file || file.type === 'image/jpeg') {
+                return;
+            }
+
+            const bitmap = await createImageBitmap(file);
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(bitmap, 0, 0);
+
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+            const jpegName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+            const transfer = new DataTransfer();
+            transfer.items.add(new File([blob], jpegName, { type: 'image/jpeg' }));
+            input.files = transfer.files;
+        });
+    });
+</script>
 @endsection
 

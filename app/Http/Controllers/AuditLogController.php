@@ -22,7 +22,7 @@ class AuditLogController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->string('search');
-            $query->where('student_name', 'like', "%{$search}%");
+            $query->whereLike('student_name', "%{$search}%");
         }
 
         $logs = $query->paginate(25)->withQueryString();

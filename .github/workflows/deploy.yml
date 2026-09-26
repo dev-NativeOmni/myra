@@ -17,13 +17,34 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    # Tests run on Postgres, the same database engine as production (Supabase).
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testing
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: testing
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
     steps:
       - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, dom, gd, zip, intl, sqlite3, pdo_sqlite
+          extensions: mbstring, dom, gd, zip, intl, pdo_pgsql, sqlite3, pdo_sqlite
           coverage: none
 
       - uses: actions/setup-node@v5
@@ -47,17 +68,21 @@ jobs:
 
   deploy:
     needs: test
-    # Deploy only from main, and only once the server is ready (repo variable DEPLOY_ENABLED=true).
+    # Deploy only from main, and only once Vercel and Supabase are set up (repo variable DEPLOY_ENABLED=true).
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment: production
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
     steps:
       - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: mbstring, dom, gd, zip, intl, sqlite3, pdo_sqlite
+          extensions: mbstring, dom, zip, intl, pdo_pgsql
           coverage: none
 
       - uses: actions/setup-node@v5
@@ -65,29 +90,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Build production release
+      - name: Install dependencies
         run: |
-          composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader
+          composer install --no-interaction --prefer-dist --no-progress --no-dev --ignore-platform-req=ext-gd
           npm ci
-          npm run build
-          tar -czf "$RUNNER_TEMP/release.tar.gz" \
-            --exclude=./.git --exclude=./node_modules --exclude=./tests \
-            --exclude=./storage --exclude=./.env --exclude=./database/database.sqlite \
-            .
 
-      - name: Configure SSH
+      - name: Run database migrations
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          DB_CONNECTION: pgsql
+          DB_URL: ${{ secrets.DATABASE_MIGRATION_URL }}
+          DB_SSLMODE: require
+          CACHE_STORE: array
+        run: php artisan migrate --force --no-interaction
 
-      - name: Upload and activate release
+      - name: Build and deploy to Vercel
         env:
-          SSH_TARGET: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          scp "$RUNNER_TEMP/release.tar.gz" .github/scripts/deploy.sh "$SSH_TARGET:/tmp/"
-          ssh "$SSH_TARGET" "bash /tmp/deploy.sh /tmp/release.tar.gz ${GITHUB_SHA::7}"
+          npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
