@@ -1,0 +1,96 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Classroom;
+use App\Models\User;
+use Database\Seeders\SampleDataSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class UserManagementTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected User $superAdmin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(SampleDataSeeder::class);
+
+        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+    }
+
+    public function test_creating_a_classroom_scoped_user_assigns_selected_classrooms(): void
+    {
+        $classrooms = Classroom::take(2)->pluck('id');
+
+        $response = $this->actingAs($this->superAdmin)->post(route('users.store'), [
+            'name' => 'Ustadz Baru',
+            'username' => 'ustadz_baru',
+            'email' => 'ustadz.baru@example.com',
+            'password' => 'password123',
+            'role' => User::ROLE_GURU,
+            'classroom_ids' => $classrooms->all(),
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+
+        $user = User::where('username', 'ustadz_baru')->firstOrFail();
+        $this->assertSame($classrooms->sort()->values()->all(), $user->classrooms->pluck('id')->sort()->values()->all());
+    }
+
+    public function test_creating_a_lembaga_wide_user_ignores_submitted_classroom_ids(): void
+    {
+        $classrooms = Classroom::take(2)->pluck('id');
+
+        $this->actingAs($this->superAdmin)->post(route('users.store'), [
+            'name' => 'Staf TU Baru',
+            'username' => 'tu_baru',
+            'email' => 'tu.baru@example.com',
+            'password' => 'password123',
+            'role' => User::ROLE_TU,
+            'classroom_ids' => $classrooms->all(),
+        ]);
+
+        $user = User::where('username', 'tu_baru')->firstOrFail();
+        $this->assertTrue($user->classrooms->isEmpty());
+    }
+
+    public function test_updating_a_users_role_and_classrooms_resyncs_assignments(): void
+    {
+        $allClassrooms = Classroom::pluck('id');
+        $guru = User::where('role', User::ROLE_GURU)->first();
+        $guru->classrooms()->sync([$allClassrooms->first()]);
+
+        $newClassroomIds = $allClassrooms->skip(1)->take(2)->all();
+
+        $this->actingAs($this->superAdmin)->put(route('users.update', $guru->id), [
+            'name' => $guru->name,
+            'username' => $guru->username,
+            'email' => $guru->email,
+            'role' => User::ROLE_GURU,
+            'classroom_ids' => $newClassroomIds,
+        ]);
+
+        $guru->refresh();
+        $this->assertSame(collect($newClassroomIds)->sort()->values()->all(), $guru->classrooms->pluck('id')->sort()->values()->all());
+    }
+
+    public function test_changing_role_away_from_classroom_scoped_clears_assignments(): void
+    {
+        $guru = User::where('role', User::ROLE_GURU)->first();
+        $guru->classrooms()->sync(Classroom::pluck('id'));
+
+        $this->actingAs($this->superAdmin)->put(route('users.update', $guru->id), [
+            'name' => $guru->name,
+            'username' => $guru->username,
+            'email' => $guru->email,
+            'role' => User::ROLE_TU,
+        ]);
+
+        $guru->refresh();
+        $this->assertTrue($guru->classrooms->isEmpty());
+    }
+}
