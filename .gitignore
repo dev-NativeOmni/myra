@@ -29,3 +29,5 @@ Thumbs.db
 # Dokumen internal lembaga (tidak dipublikasikan)
 /PRD - *.md
 /DESIGN - *.md
+.vercel
+.env*
