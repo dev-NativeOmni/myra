@@ -31,3 +31,4 @@ Thumbs.db
 /DESIGN - *.md
 .vercel
 .env*.local
+/dist
