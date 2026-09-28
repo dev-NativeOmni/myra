@@ -57,6 +57,9 @@ jobs:
           composer install --no-interaction --prefer-dist --no-progress
           npm ci
 
+      - name: Check code style
+        run: vendor/bin/pint --test
+
       - name: Build assets
         run: npm run build
 

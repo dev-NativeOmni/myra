@@ -1,0 +1,49 @@
+name: Uptime Check
+
+# Checks the production health endpoint every 30 minutes. When it fails, an issue
+# is opened (GitHub emails the repository owner); it is closed again on recovery.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    if: vars.DEPLOY_ENABLED == 'true' && vars.PRODUCTION_URL != ''
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      HEALTH_URL: ${{ vars.PRODUCTION_URL }}/up
+      ISSUE_TITLE: 'Situs production tidak dapat diakses'
+
+    steps:
+      - name: Check health endpoint
+        id: health
+        run: |
+          if curl -fsS --max-time 20 --retry 3 --retry-delay 10 --retry-all-errors -o /dev/null "$HEALTH_URL"; then
+            echo "up=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "up=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open an issue when the site is down
+        if: steps.health.outputs.up == 'false'
+        run: |
+          open_issue=$(gh issue list --state open --search "in:title \"$ISSUE_TITLE\"" --json number -q '.[0].number')
+          if [ -z "$open_issue" ]; then
+            gh issue create --title "$ISSUE_TITLE" \
+              --body "Pemeriksaan otomatis ke $HEALTH_URL gagal pada $(TZ=Asia/Jakarta date '+%d %B %Y %H:%M') WIB (3 kali percobaan). Periksa log di dashboard Vercel."
+          fi
+          exit 1
+
+      - name: Close the issue once the site is back
+        if: steps.health.outputs.up == 'true'
+        run: |
+          open_issue=$(gh issue list --state open --search "in:title \"$ISSUE_TITLE\"" --json number -q '.[0].number')
+          if [ -n "$open_issue" ]; then
+            gh issue close "$open_issue" --comment "Situs kembali normal pada $(TZ=Asia/Jakarta date '+%d %B %Y %H:%M') WIB."
+          fi
