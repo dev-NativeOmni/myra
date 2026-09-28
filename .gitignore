@@ -30,4 +30,4 @@ Thumbs.db
 /PRD - *.md
 /DESIGN - *.md
 .vercel
-.env*
+.env*.local

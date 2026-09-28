@@ -1,14 +1,12 @@
-/vendor
-/node_modules
-/tests
-/storage
+# Keep in sync with "excludeFiles" in vercel.json: prebuilt functions must not
+# reference files that are excluded from the upload (vendor/ is required).
 /.github
 /.claude
 /.grok
+/node_modules
+/tests
+/storage
+/database/*.sqlite
 /.env
 /.env.*
-!/.env.example
-/database/*.sqlite
-/public/hot
-/public/storage
 *.md
