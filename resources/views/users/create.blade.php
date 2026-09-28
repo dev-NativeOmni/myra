@@ -31,9 +31,9 @@
 
         <div>
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kata Sandi Awal <span class="text-rose-500">*</span></label>
-            <input type="password" name="password" required minlength="6"
+            <input type="password" name="password" required minlength="8"
                 class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition"
-                placeholder="Minimal 6 karakter">
+                placeholder="Minimal 8 karakter">
         </div>
 
         <div>

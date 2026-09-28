@@ -93,4 +93,33 @@ class UserManagementTest extends TestCase
         $guru->refresh();
         $this->assertTrue($guru->classrooms->isEmpty());
     }
+
+    public function test_creating_a_user_rejects_password_shorter_than_eight_characters(): void
+    {
+        $response = $this->actingAs($this->superAdmin)->post(route('users.store'), [
+            'name' => 'Wali Baru',
+            'username' => 'wali_baru',
+            'password' => 'pass123',
+            'role' => User::ROLE_TU,
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertDatabaseMissing('users', ['username' => 'wali_baru']);
+    }
+
+    public function test_updating_a_user_rejects_password_shorter_than_eight_characters(): void
+    {
+        $user = User::where('role', User::ROLE_TU)->firstOrFail();
+        $originalHash = $user->password;
+
+        $response = $this->actingAs($this->superAdmin)->put(route('users.update', $user), [
+            'name' => $user->name,
+            'username' => $user->username,
+            'password' => 'pass123',
+            'role' => $user->role,
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertSame($originalHash, $user->fresh()->password);
+    }
 }
