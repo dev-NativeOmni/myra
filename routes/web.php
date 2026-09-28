@@ -47,6 +47,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/students/import', [StudentController::class, 'import'])->name('students.import');
         Route::resource('students', StudentController::class);
 
+        // Import/Export routes must be registered before the users resource route.
+        Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
+        Route::get('/users/import/template', [UserController::class, 'importTemplate'])->name('users.import.template');
+        Route::post('/users/import', [UserController::class, 'import'])->name('users.import');
         Route::resource('users', UserController::class);
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 

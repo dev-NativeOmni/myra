@@ -214,6 +214,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Roles this user may assign when creating or editing accounts.
+     * Only a Super Admin may grant the Super Admin role.
+     *
+     * @return list<string>
+     */
+    public function assignableRoles(): array
+    {
+        $roles = [
+            self::ROLE_ADMIN,
+            self::ROLE_GURU,
+            self::ROLE_WALI_KELAS,
+            self::ROLE_KESANTRIAN,
+            self::ROLE_TU,
+            self::ROLE_WALI_MURID,
+        ];
+
+        return $this->isSuperAdmin() ? [self::ROLE_SUPER_ADMIN, ...$roles] : $roles;
+    }
+
+    /**
      * Name of the route each role lands on after login and when clicking the logo.
      */
     public function homeRouteName(): string

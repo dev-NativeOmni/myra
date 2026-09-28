@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\UserImportTemplateExport;
+use App\Exports\UsersExport;
+use App\Imports\UsersImport;
 use App\Models\Classroom;
 use App\Models\Student;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class UserController extends Controller
 {
@@ -19,24 +25,69 @@ class UserController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = User::with(['student', 'classrooms'])->latest();
-
-        if ($request->filled('role')) {
-            $query->where('role', $request->role);
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->whereLike('name', "%{$search}%")
-                    ->orWhereLike('username', "%{$search}%")
-                    ->orWhereLike('email', "%{$search}%");
-            });
-        }
-
-        $users = $query->paginate(15)->withQueryString();
+        $users = $this->filteredUsers($request)->latest()->paginate(15)->withQueryString();
 
         return view('users.index', compact('users'));
+    }
+
+    /**
+     * Export the users matching the current filters to an Excel file that can be re-imported.
+     */
+    public function export(Request $request): BinaryFileResponse
+    {
+        $users = $this->filteredUsers($request)->orderBy('role')->orderBy('name')->get();
+
+        return Excel::download(new UsersExport($users), 'Data_Pengguna.xlsx');
+    }
+
+    /**
+     * Download an Excel template for importing staff and parent accounts.
+     */
+    public function importTemplate(): BinaryFileResponse
+    {
+        return Excel::download(new UserImportTemplateExport, 'Template_Import_Pengguna.xlsx');
+    }
+
+    /**
+     * Import staff and parent accounts from an uploaded Excel/CSV file.
+     * Existing accounts are matched and updated by username; the rest are created.
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+        ]);
+
+        $import = new UsersImport($request->user());
+
+        try {
+            Excel::import($import, $request->file('file'));
+        } catch (\Throwable $e) {
+            return back()->withErrors(["Gagal membaca berkas: {$e->getMessage()}. Pastikan formatnya sesuai template."]);
+        }
+
+        if ($import->created === 0 && $import->updated === 0) {
+            return back()->withErrors($import->rowErrors ?: ['File tidak berisi data pengguna yang valid untuk diimpor.']);
+        }
+
+        $redirect = redirect()->route('users.index')
+            ->with('success', "Impor selesai: {$import->created} akun baru dibuat, {$import->updated} akun diperbarui.");
+
+        return $import->rowErrors ? $redirect->withErrors($import->rowErrors) : $redirect;
+    }
+
+    /**
+     * @return Builder<User>
+     */
+    private function filteredUsers(Request $request): Builder
+    {
+        return User::with(['student', 'classrooms'])
+            ->when($request->filled('role'), fn (Builder $query) => $query->where('role', $request->role))
+            ->when($request->filled('search'), fn (Builder $query) => $query->where(function (Builder $query) use ($request) {
+                $query->whereLike('name', "%{$request->search}%")
+                    ->orWhereLike('username', "%{$request->search}%")
+                    ->orWhereLike('email', "%{$request->search}%");
+            }));
     }
 
     /**
@@ -70,18 +121,7 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $allowedRoles = [
-            User::ROLE_ADMIN,
-            User::ROLE_GURU,
-            User::ROLE_WALI_KELAS,
-            User::ROLE_KESANTRIAN,
-            User::ROLE_TU,
-            User::ROLE_WALI_MURID,
-        ];
-
-        if (Auth::user()->isSuperAdmin()) {
-            $allowedRoles[] = User::ROLE_SUPER_ADMIN;
-        }
+        $allowedRoles = Auth::user()->assignableRoles();
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -148,18 +188,7 @@ class UserController extends Controller
             abort(403, 'Hanya Super Admin yang dapat mengubah akun Super Admin.');
         }
 
-        $allowedRoles = [
-            User::ROLE_ADMIN,
-            User::ROLE_GURU,
-            User::ROLE_WALI_KELAS,
-            User::ROLE_KESANTRIAN,
-            User::ROLE_TU,
-            User::ROLE_WALI_MURID,
-        ];
-
-        if ($currentUser->isSuperAdmin()) {
-            $allowedRoles[] = User::ROLE_SUPER_ADMIN;
-        }
+        $allowedRoles = $currentUser->assignableRoles();
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

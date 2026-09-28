@@ -1,0 +1,157 @@
+<?php
+
+namespace App\Imports;
+
+use App\Models\Classroom;
+use App\Models\Student;
+use App\Models\User;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+
+/**
+ * Imports staff and parent (wali murid) accounts. Rows are matched by username:
+ * existing accounts are updated, new usernames are created. Each row follows the
+ * same rules as the user form, including who may grant or change Super Admin.
+ */
+class UsersImport implements ToCollection, WithCustomValueBinder, WithHeadingRow
+{
+    use Importable;
+
+    public int $created = 0;
+
+    public int $updated = 0;
+
+    /** @var list<string> */
+    public array $rowErrors = [];
+
+    /** @var array<string, int> */
+    protected array $classroomIdsByName;
+
+    /** @var array<string, int> */
+    protected array $studentIdsByNis;
+
+    public function __construct(protected User $importer)
+    {
+        $this->classroomIdsByName = Classroom::pluck('id', 'name')->all();
+        $this->studentIdsByNis = Student::pluck('id', 'nis')->all();
+    }
+
+    /**
+     * @param  Collection<int, Collection<string, mixed>>  $rows
+     */
+    public function collection(Collection $rows): void
+    {
+        foreach ($rows as $index => $row) {
+            $values = $row->map(fn ($value) => trim((string) $value))->all();
+
+            if (implode('', $values) === '') {
+                continue;
+            }
+
+            $error = $this->importRow($values);
+
+            if ($error !== null) {
+                // +2: the heading row is row 1 and collection indexes start at 0.
+                $this->rowErrors[] = 'Baris '.($index + 2).": {$error}";
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, string>  $row
+     * @return string|null an error message, or null when the row was saved
+     */
+    protected function importRow(array $row): ?string
+    {
+        $username = $row['username'] ?? '';
+        $role = $row['peran'] ?? '';
+        $user = User::where('username', $username)->first();
+
+        if ($user?->isSuperAdmin() && ! $this->importer->isSuperAdmin()) {
+            return "Hanya Super Admin yang dapat mengubah akun Super Admin (@{$username}).";
+        }
+
+        if ($user?->is($this->importer) && $role !== $user->role) {
+            return 'Peran akun Anda sendiri tidak dapat diubah lewat impor.';
+        }
+
+        $validator = Validator::make($row, [
+            'nama_lengkap' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:100', 'alpha_dash'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
+            'peran' => ['required', Rule::in($this->importer->assignableRoles())],
+            'nis_santri' => ['nullable', 'required_if:peran,'.User::ROLE_WALI_MURID, Rule::in(array_keys($this->studentIdsByNis))],
+            'password' => [$user ? 'nullable' : 'required', 'string', 'min:8'],
+        ], [
+            'nama_lengkap.required' => 'Nama Lengkap wajib diisi.',
+            'username.required' => 'Username wajib diisi.',
+            'username.alpha_dash' => 'Username hanya boleh berisi huruf, angka, strip, dan garis bawah.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah dipakai akun lain.',
+            'peran.required' => 'Peran wajib diisi.',
+            'peran.in' => "Peran '{$role}' tidak dikenal atau tidak boleh Anda berikan.",
+            'nis_santri.required_if' => 'NIS Santri wajib diisi untuk peran wali_murid.',
+            'nis_santri.in' => "NIS Santri '".($row['nis_santri'] ?? '')."' tidak ditemukan.",
+            'password.required' => 'Password wajib diisi untuk akun baru.',
+            'password.min' => 'Password minimal 8 karakter.',
+        ]);
+
+        if ($validator->fails()) {
+            return implode(' ', $validator->errors()->all());
+        }
+
+        $isClassroomScoped = in_array($role, User::CLASSROOM_SCOPED_ROLES, true);
+        $classroomNames = array_filter(array_map('trim', explode(',', $row['kelas'] ?? '')));
+        $unknownClassrooms = array_diff($classroomNames, array_keys($this->classroomIdsByName));
+
+        if ($isClassroomScoped && $unknownClassrooms !== []) {
+            return "Kelas '".implode("', '", $unknownClassrooms)."' tidak ditemukan. Pastikan nama kelas sama persis dengan Data Kelas.";
+        }
+
+        $isNew = $user === null;
+
+        DB::transaction(function () use ($user, $row, $role, $isClassroomScoped, $classroomNames): void {
+            $user ??= new User;
+            $user->fill([
+                'name' => $row['nama_lengkap'],
+                'username' => $row['username'],
+                'email' => ($row['email'] ?? '') ?: null,
+                'role' => $role,
+                'student_id' => $role === User::ROLE_WALI_MURID ? $this->studentIdsByNis[$row['nis_santri']] : null,
+            ]);
+
+            if (($row['password'] ?? '') !== '') {
+                $user->password = $row['password'];
+            }
+
+            $user->save();
+
+            $user->classrooms()->sync(
+                $isClassroomScoped ? array_map(fn ($name) => $this->classroomIdsByName[$name], $classroomNames) : []
+            );
+        });
+
+        $isNew ? $this->created++ : $this->updated++;
+
+        return null;
+    }
+
+    /**
+     * Read every cell as a plain string so values like NIS "0101" or
+     * all-digit passwords keep their leading zeros.
+     */
+    public function bindValue(Cell $cell, $value): bool
+    {
+        $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
+
+        return true;
+    }
+}
