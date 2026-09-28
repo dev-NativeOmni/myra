@@ -1,0 +1,59 @@
+name: Daily Backup
+
+# Dumps the Supabase database and the uploaded branding files, encrypts them with
+# BACKUP_PASSPHRASE (AES-256) and keeps them as a workflow artifact for 30 days.
+# The repository is public, so backups must never be stored unencrypted.
+on:
+  schedule:
+    - cron: '0 18 * * *' # 01:00 WIB
+  workflow_dispatch:
+
+jobs:
+  backup:
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Install PostgreSQL 17 client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_MIGRATION_URL }}
+        run: |
+          mkdir -p backup
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" \
+            --format=custom --no-owner --no-privileges --file=backup/database.dump
+          ls -lh backup/database.dump
+
+      - name: Download uploaded files
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_ENDPOINT: ${{ secrets.AWS_ENDPOINT }}
+          AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
+        run: aws s3 sync "s3://$AWS_BUCKET" backup/uploads --endpoint-url "$AWS_ENDPOINT" --only-show-errors
+
+      - name: Encrypt
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          name="taqreer-backup-$(TZ=Asia/Jakarta date +%Y%m%d-%H%M)"
+          tar -czf "$name.tar.gz" -C backup .
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+            --passphrase-fd 0 --output "$name.tar.gz.gpg" "$name.tar.gz" <<< "$BACKUP_PASSPHRASE"
+          rm -rf backup "$name.tar.gz"
+          echo "BACKUP_FILE=$name.tar.gz.gpg" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 30
+          if-no-files-found: error
