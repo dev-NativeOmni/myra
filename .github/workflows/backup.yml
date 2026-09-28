@@ -51,6 +51,17 @@ jobs:
           rm -rf backup "$name.tar.gz"
           echo "BACKUP_FILE=$name.tar.gz.gpg" >> "$GITHUB_ENV"
 
+      - name: Verify the encrypted backup can be restored
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          mkdir verify
+          gpg --batch --quiet --passphrase-fd 0 --decrypt "$BACKUP_FILE" <<< "$BACKUP_PASSPHRASE" | tar -xz -C verify
+          tables=$(/usr/lib/postgresql/17/bin/pg_restore --list verify/database.dump | grep -c 'TABLE DATA')
+          echo "Tables in dump: $tables"
+          test "$tables" -gt 10
+          rm -rf verify
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BACKUP_FILE }}
