@@ -81,13 +81,6 @@ class AuthController extends Controller
      */
     private function redirectBasedOnRole(User $user): RedirectResponse
     {
-        return match ($user->role) {
-            User::ROLE_WALI_MURID => redirect()->route('parent.dashboard'),
-            User::ROLE_GURU => redirect()->route('modules.tahfidz'),
-            User::ROLE_WALI_KELAS => redirect()->route('modules.akademik'),
-            User::ROLE_KESANTRIAN => redirect()->route('modules.kesantrian'),
-            User::ROLE_TU => redirect()->route('modules.administrasi'),
-            default => redirect()->route('dashboard'),
-        };
+        return redirect()->route($user->homeRouteName());
     }
 }

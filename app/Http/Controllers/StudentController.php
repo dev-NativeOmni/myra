@@ -103,8 +103,10 @@ class StudentController extends Controller
     /**
      * Display the specified student profile, progress trends, and report history.
      */
-    public function show(Student $student): View
+    public function show(Request $request, Student $student): View
     {
+        abort_unless($request->user()->canViewClassroom($student->classroom_id), 403, 'Akses Ditolak: Anda tidak bertanggung jawab atas kelas santri ini.');
+
         $student->load(['classroom', 'monthlyReports.record', 'parentUser', 'tahfidzJournals']);
         $trends = $student->getProgressTrends();
         $reports = $student->monthlyReports()->with('record')->orderBy('report_date', 'desc')->get();

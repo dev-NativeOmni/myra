@@ -118,7 +118,13 @@
         $isTu = $user?->isTu() ?? false;
         $isWaliMurid = $user?->isWaliMurid() ?? false;
         $isAdminOrSuper = $isSuperAdmin || $isAdmin;
-        $sampleReportId = $user && ! $isWaliMurid ? \App\Models\MonthlyReport::query()->latest('id')->value('id') : null;
+        $responsibleClassroomIds = $user?->responsibleClassroomIds();
+        $sampleReportId = $user && ! $isWaliMurid
+            ? \App\Models\MonthlyReport::query()
+                ->when($responsibleClassroomIds !== null, fn ($query) => $query->whereHas('student', fn ($student) => $student->whereIn('classroom_id', $responsibleClassroomIds)))
+                ->latest('id')
+                ->value('id')
+            : null;
     @endphp
 
     <div class="min-h-full" x-data="sidebarLayout()" @keydown.window="onKeydown($event)">
@@ -137,7 +143,7 @@
             <div class="flex-1 min-h-0 flex flex-col">
                 <!-- Brand Header -->
                 <div class="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
-                    <a href="{{ url('/') }}" class="flex items-center gap-3">
+                    <a href="{{ $user ? route($user->homeRouteName()) : url('/') }}" class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-500/30 text-lg">
                             T
                         </div>
@@ -166,9 +172,11 @@
                             Portal Rapor Ananda
                         </x-nav-link>
                     @else
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-                            Dashboard
-                        </x-nav-link>
+                        @if($isAdminOrSuper)
+                            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                                Dashboard
+                            </x-nav-link>
+                        @endif
 
                         @if($isAdminOrSuper || $isGuru || $isWaliKelas)
                             <x-nav-link :href="route('analytics.index')" :active="request()->routeIs('analytics.*')" icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">

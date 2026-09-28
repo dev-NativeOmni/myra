@@ -147,9 +147,10 @@ class MonthlyReportController extends Controller
     /**
      * Preview the monthly report as a PDF stream.
      */
-    public function preview($id): Response
+    public function preview(Request $request, $id): Response
     {
         $report = MonthlyReport::with(['student.classroom', 'record'])->findOrFail($id);
+        abort_unless($request->user()->canViewClassroom($report->student->classroom_id), 403, 'Akses Ditolak: Anda tidak bertanggung jawab atas kelas santri ini.');
         $student = $report->student;
         $record = $report->record ?? new ReportRecord;
         $institution = Institution::first() ?? new Institution([
@@ -176,10 +177,14 @@ class MonthlyReportController extends Controller
      */
     public function completeness(Request $request): View
     {
-        $classrooms = Classroom::orderBy('name')->get();
+        $responsibleClassroomIds = $request->user()->responsibleClassroomIds();
+        $classrooms = Classroom::query()
+            ->when($responsibleClassroomIds !== null, fn ($query) => $query->whereIn('id', $responsibleClassroomIds))
+            ->orderBy('name')
+            ->get();
         $selectedClassroomId = $request->query('classroom_id');
-        if (! $selectedClassroomId && $classrooms->isNotEmpty()) {
-            $selectedClassroomId = $classrooms->first()->id;
+        if (! $classrooms->contains('id', (int) $selectedClassroomId)) {
+            $selectedClassroomId = $classrooms->first()?->id;
         }
 
         $existingPeriods = MonthlyReport::select('period_title')->distinct()->pluck('period_title')->toArray();

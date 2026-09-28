@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Classroom;
 use App\Models\MonthlyReport;
 use App\Models\User;
 use Database\Seeders\SampleDataSeeder;
@@ -48,5 +49,28 @@ class LayoutNavigationTest extends TestCase
             '/href="'.preg_quote(route('dashboard'), '/').'"\s+aria-current="page"/',
             $response->getContent()
         );
+    }
+
+    public function test_guru_sample_preview_links_to_report_of_own_classroom(): void
+    {
+        $this->seed(SampleDataSeeder::class);
+        $ownClassroom = Classroom::whereHas('students.monthlyReports')->first();
+        $guru = User::where('role', User::ROLE_GURU)->first();
+        $guru->classrooms()->sync([$ownClassroom->id]);
+        $latestOwnReportId = MonthlyReport::whereHas('student', fn ($query) => $query->where('classroom_id', $ownClassroom->id))->max('id');
+
+        $response = $this->actingAs($guru)->get(route('modules.tahfidz'));
+
+        $response->assertSee('href="'.route('reports.preview', $latestOwnReportId).'"', false);
+    }
+
+    public function test_dashboard_menu_is_hidden_from_classroom_staff(): void
+    {
+        $this->seed(SampleDataSeeder::class);
+        $guru = User::where('role', User::ROLE_GURU)->first();
+
+        $response = $this->actingAs($guru)->get(route('modules.tahfidz'));
+
+        $response->assertDontSee('href="'.route('dashboard').'"', false);
     }
 }

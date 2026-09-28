@@ -214,6 +214,31 @@ class User extends Authenticatable
     }
 
     /**
+     * Name of the route each role lands on after login and when clicking the logo.
+     */
+    public function homeRouteName(): string
+    {
+        return match ($this->role) {
+            self::ROLE_WALI_MURID => 'parent.dashboard',
+            self::ROLE_GURU => 'modules.tahfidz',
+            self::ROLE_WALI_KELAS => 'modules.akademik',
+            self::ROLE_KESANTRIAN => 'modules.kesantrian',
+            self::ROLE_TU => 'modules.administrasi',
+            default => 'dashboard',
+        };
+    }
+
+    /**
+     * Check if this user may view reports and profiles of students in the given
+     * classroom. Viewing follows the same scope as editing: classroom-scoped
+     * roles only see their assigned classrooms.
+     */
+    public function canViewClassroom(?int $classroomId): bool
+    {
+        return $this->canEditClassroom($classroomId);
+    }
+
+    /**
      * Get formatted role label.
      */
     public function getRoleLabelAttribute(): string
