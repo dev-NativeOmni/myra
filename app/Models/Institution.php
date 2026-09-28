@@ -37,6 +37,13 @@ class Institution extends Model
         'class' => 'Kelas',
     ];
 
+    /**
+     * Data URIs already fetched from storage, keyed by file path.
+     *
+     * @var array<string, string|null>
+     */
+    private array $imageDataUris = [];
+
     protected static function booted(): void
     {
         static::saved(fn () => Cache::forget('institution:current:attributes'));
@@ -63,13 +70,21 @@ class Institution extends Model
     public function imageDataUri(string $attribute): ?string
     {
         $path = $this->{$attribute};
-        $disk = Storage::disk(config('filesystems.uploads'));
 
-        if (! $path || ! $disk->exists($path)) {
+        if (! $path) {
             return null;
         }
 
-        return 'data:'.$disk->mimeType($path).';base64,'.base64_encode($disk->get($path));
+        // Batch exports render one PDF per student; fetch each image from storage only once.
+        if (! array_key_exists($path, $this->imageDataUris)) {
+            $disk = Storage::disk(config('filesystems.uploads'));
+
+            $this->imageDataUris[$path] = $disk->exists($path)
+                ? 'data:'.$disk->mimeType($path).';base64,'.base64_encode($disk->get($path))
+                : null;
+        }
+
+        return $this->imageDataUris[$path];
     }
 
     /**

@@ -108,6 +108,20 @@ class MasterDataTest extends TestCase
         $this->assertSame('data:image/jpeg;base64,'.base64_encode($jpegBytes), $dataUri);
     }
 
+    public function test_institution_image_data_uri_reads_storage_only_once_per_instance(): void
+    {
+        Storage::fake('public');
+        $jpegBytes = UploadedFile::fake()->image('stamp.jpg')->getContent();
+        Storage::disk('public')->put('institutions/stamp.jpg', $jpegBytes);
+        $institution = new Institution(['stamp_path' => 'institutions/stamp.jpg']);
+        $firstDataUri = $institution->imageDataUri('stamp_path');
+        Storage::disk('public')->delete('institutions/stamp.jpg');
+
+        $secondDataUri = $institution->imageDataUri('stamp_path');
+
+        $this->assertSame($firstDataUri, $secondDataUri);
+    }
+
     public function test_institution_image_data_uri_is_null_without_upload(): void
     {
         Storage::fake('public');
