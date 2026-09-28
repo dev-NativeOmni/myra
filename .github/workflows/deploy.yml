@@ -47,7 +47,7 @@ jobs:
           extensions: mbstring, dom, gd, zip, intl, pdo_pgsql, sqlite3, pdo_sqlite
           coverage: none
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -88,7 +88,7 @@ jobs:
           extensions: mbstring, dom, zip, intl, pdo_pgsql
           coverage: none
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
