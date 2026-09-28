@@ -7,7 +7,6 @@ use App\Models\MonthlyReport;
 use App\Models\ReportRecord;
 use App\Models\Student;
 use App\Models\User;
-use App\Services\StudentProgressService;
 use Database\Seeders\SampleDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,9 +16,13 @@ class StudentProgressTrendTest extends TestCase
     use RefreshDatabase;
 
     protected User $superAdmin;
+
     protected User $guru;
+
     protected User $waliMurid;
+
     protected Student $student;
+
     protected Classroom $classroom;
 
     protected function setUp(): void
@@ -125,4 +128,3 @@ class StudentProgressTrendTest extends TestCase
         $response->assertSee('parentPhysicalChart');
     }
 }
-

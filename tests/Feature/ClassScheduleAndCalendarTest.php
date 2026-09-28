@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Classroom;
 use App\Models\Setting;
-use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\SampleDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,8 +14,11 @@ class ClassScheduleAndCalendarTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $guru;
+
     protected Classroom $class1;
+
     protected Classroom $class2;
 
     protected function setUp(): void
@@ -140,4 +142,3 @@ class ClassScheduleAndCalendarTest extends TestCase
         $this->assertNotContains('2026-08-02', $dates, 'Sunday 2026-08-02 must not be in spreadsheet');
     }
 }
-

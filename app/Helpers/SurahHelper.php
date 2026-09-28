@@ -137,6 +137,7 @@ class SurahHelper
     public static function find(int $number): ?array
     {
         $all = self::all();
+
         return $all[$number] ?? null;
     }
 
@@ -153,7 +154,7 @@ class SurahHelper
                 return $surah;
             }
         }
+
         return null;
     }
 }
-

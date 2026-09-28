@@ -17,9 +17,13 @@ class ModuleSettingTest extends TestCase
     use RefreshDatabase;
 
     protected User $superAdmin;
+
     protected User $admin;
+
     protected User $guru;
+
     protected User $waliMurid;
+
     protected Classroom $classroom;
 
     protected function setUp(): void
@@ -66,7 +70,7 @@ class ModuleSettingTest extends TestCase
             'module' => 'kesantrian',
             'label' => 'Kerapian Lemari & Ranjang',
             'type' => 'select',
-            'options_raw' => "A (Sangat Rapi), B (Rapi), C (Cukup), D (Kurang)",
+            'options_raw' => 'A (Sangat Rapi), B (Rapi), C (Cukup), D (Kurang)',
             'placeholder' => 'Pilih kondisi kerapian',
         ]);
 
@@ -103,13 +107,13 @@ class ModuleSettingTest extends TestCase
     {
         $field = ModuleField::where('key', 'tahfidz_akumulasi')->first();
         $this->assertNotNull($field);
-        $this->assertTrue((bool)$field->is_active);
+        $this->assertTrue((bool) $field->is_active);
 
         $response = $this->actingAs($this->superAdmin)->patch(route('module-settings.toggle', $field->id));
         $response->assertRedirect();
 
         $field->refresh();
-        $this->assertFalse((bool)$field->is_active);
+        $this->assertFalse((bool) $field->is_active);
     }
 
     public function test_admin_cannot_delete_system_field_but_can_delete_custom_field(): void
@@ -188,8 +192,8 @@ class ModuleSettingTest extends TestCase
                 $report->id => [
                     'adab_ibadah' => 'A (Sangat Baik)',
                     'custom_kerapian_kamar' => 'Sangat Rapi dan Bersih',
-                ]
-            ]
+                ],
+            ],
         ];
 
         $resSave = $this->actingAs($this->superAdmin)->post(route('modules.batch-store'), $postData);
@@ -208,4 +212,3 @@ class ModuleSettingTest extends TestCase
         $pdfRes->assertStatus(200);
     }
 }
-

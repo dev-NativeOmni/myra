@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Classroom;
 use App\Models\MonthlyReport;
-use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\SampleDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -17,8 +17,11 @@ class AnalyticsAndEarlyWarningTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $guru;
+
     protected User $parent;
+
     protected Classroom $class1;
 
     protected function setUp(): void
@@ -121,4 +124,3 @@ class AnalyticsAndEarlyWarningTest extends TestCase
         $response->assertSee('Kelas 1');
     }
 }
-

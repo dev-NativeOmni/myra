@@ -15,7 +15,9 @@ class TahfidzJournalTest extends TestCase
     use RefreshDatabase;
 
     protected User $guru;
+
     protected User $kesantrian;
+
     protected Student $student;
 
     protected function setUp(): void
@@ -135,8 +137,8 @@ class TahfidzJournalTest extends TestCase
                     // Empty row that should be ignored
                     'student_id' => null,
                     'type' => '',
-                ]
-            ]
+                ],
+            ],
         ]);
 
         $response->assertRedirect(route('tahfidz-journals.index'));
@@ -279,5 +281,3 @@ class TahfidzJournalTest extends TestCase
         $spreadsheetResponse->assertStatus(403);
     }
 }
-
-
