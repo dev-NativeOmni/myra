@@ -17,7 +17,8 @@ use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 /**
- * Imports staff and parent (wali murid) accounts. Rows are matched by username:
+ * Imports staff and parent (wali murid) accounts; a parent may list several
+ * students (siblings) as comma-separated NIS values. Rows are matched by username:
  * existing accounts are updated, new usernames are created. Each row follows the
  * same rules as the user form, including who may grant or change Super Admin.
  */
@@ -88,7 +89,7 @@ class UsersImport implements ToCollection, WithCustomValueBinder, WithHeadingRow
             'username' => ['required', 'string', 'max:100', 'alpha_dash'],
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
             'peran' => ['required', Rule::in($this->importer->assignableRoles())],
-            'nis_santri' => ['nullable', 'required_if:peran,'.User::ROLE_WALI_MURID, Rule::in(array_keys($this->studentIdsByNis))],
+            'nis_santri' => ['nullable', 'required_if:peran,'.User::ROLE_WALI_MURID],
             'password' => [$user ? 'nullable' : 'required', 'string', 'min:8'],
         ], [
             'nama_lengkap.required' => 'Nama Lengkap wajib diisi.',
@@ -99,7 +100,6 @@ class UsersImport implements ToCollection, WithCustomValueBinder, WithHeadingRow
             'peran.required' => 'Peran wajib diisi.',
             'peran.in' => "Peran '{$role}' tidak dikenal atau tidak boleh Anda berikan.",
             'nis_santri.required_if' => 'NIS Santri wajib diisi untuk peran wali_murid.',
-            'nis_santri.in' => "NIS Santri '".($row['nis_santri'] ?? '')."' tidak ditemukan.",
             'password.required' => 'Password wajib diisi untuk akun baru.',
             'password.min' => 'Password minimal 8 karakter.',
         ]);
@@ -109,23 +109,30 @@ class UsersImport implements ToCollection, WithCustomValueBinder, WithHeadingRow
         }
 
         $isClassroomScoped = in_array($role, User::CLASSROOM_SCOPED_ROLES, true);
-        $classroomNames = array_filter(array_map('trim', explode(',', $row['kelas'] ?? '')));
+        $classroomNames = $this->splitList($row['kelas'] ?? '');
         $unknownClassrooms = array_diff($classroomNames, array_keys($this->classroomIdsByName));
 
         if ($isClassroomScoped && $unknownClassrooms !== []) {
             return "Kelas '".implode("', '", $unknownClassrooms)."' tidak ditemukan. Pastikan nama kelas sama persis dengan Data Kelas.";
         }
 
+        $isParent = $role === User::ROLE_WALI_MURID;
+        $studentNisList = $this->splitList($row['nis_santri'] ?? '');
+        $unknownNis = array_diff($studentNisList, array_map('strval', array_keys($this->studentIdsByNis)));
+
+        if ($isParent && $unknownNis !== []) {
+            return "NIS Santri '".implode("', '", $unknownNis)."' tidak ditemukan.";
+        }
+
         $isNew = $user === null;
 
-        DB::transaction(function () use ($user, $row, $role, $isClassroomScoped, $classroomNames): void {
+        DB::transaction(function () use ($user, $row, $role, $isClassroomScoped, $classroomNames, $isParent, $studentNisList): void {
             $user ??= new User;
             $user->fill([
                 'name' => $row['nama_lengkap'],
                 'username' => $row['username'],
                 'email' => ($row['email'] ?? '') ?: null,
                 'role' => $role,
-                'student_id' => $role === User::ROLE_WALI_MURID ? $this->studentIdsByNis[$row['nis_santri']] : null,
             ]);
 
             if (($row['password'] ?? '') !== '') {
@@ -137,11 +144,24 @@ class UsersImport implements ToCollection, WithCustomValueBinder, WithHeadingRow
             $user->classrooms()->sync(
                 $isClassroomScoped ? array_map(fn ($name) => $this->classroomIdsByName[$name], $classroomNames) : []
             );
+            $user->children()->sync(
+                $isParent ? array_map(fn ($nis) => $this->studentIdsByNis[$nis], $studentNisList) : []
+            );
         });
 
         $isNew ? $this->created++ : $this->updated++;
 
         return null;
+    }
+
+    /**
+     * Split a comma-separated cell ("1, 2") into trimmed, non-empty values.
+     *
+     * @return list<string>
+     */
+    protected function splitList(string $value): array
+    {
+        return array_values(array_unique(array_filter(array_map('trim', explode(',', $value)), fn ($item) => $item !== '')));
     }
 
     /**

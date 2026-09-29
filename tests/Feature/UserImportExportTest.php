@@ -45,7 +45,7 @@ class UserImportExportTest extends TestCase
     {
         Excel::fake();
         $guru = User::where('role', User::ROLE_GURU)->with('classrooms')->firstOrFail();
-        $parent = User::where('role', User::ROLE_WALI_MURID)->with('student')->firstOrFail();
+        $parent = User::where('role', User::ROLE_WALI_MURID)->has('children')->with('children')->firstOrFail();
 
         $this->actingAs($this->admin)->get(route('users.export'));
 
@@ -56,7 +56,7 @@ class UserImportExportTest extends TestCase
             return $export->headings() === ['Nama Lengkap', 'Username', 'Email', 'Peran', 'Kelas', 'NIS Santri', 'Password']
                 && $guruRow[3] === User::ROLE_GURU
                 && $guruRow[4] === $guru->classrooms->pluck('name')->implode(', ')
-                && $parentRow[5] === $parent->student->nis
+                && $parentRow[5] === $parent->children->pluck('nis')->implode(', ')
                 && $guruRow[6] === null
                 && $parentRow[6] === null;
         });
@@ -96,8 +96,30 @@ class UserImportExportTest extends TestCase
         $this->assertTrue(Hash::check('rahasia123', $guru->password));
         $parent = User::where('username', 'wali_impor')->firstOrFail();
         $this->assertSame(User::ROLE_WALI_MURID, $parent->role);
-        $this->assertSame($student->id, $parent->student_id);
+        $this->assertSame([$student->id], $parent->children->pluck('id')->all());
         $this->assertNull($parent->email);
+    }
+
+    public function test_import_links_parent_to_several_children_from_comma_separated_nis(): void
+    {
+        $children = Student::orderBy('nis')->take(2)->get();
+        $csv = self::HEADER."Wali Dua Anak,wali_dua_anak,,wali_murid,,\"{$children[0]->nis}, {$children[1]->nis}\",rahasia123\n";
+
+        $this->importCsv($this->admin, $csv);
+
+        $parent = User::where('username', 'wali_dua_anak')->firstOrFail();
+        $this->assertSame($children->pluck('id')->sort()->values()->all(), $parent->children->pluck('id')->sort()->values()->all());
+    }
+
+    public function test_import_rejects_parent_row_when_any_nis_is_unknown(): void
+    {
+        $student = Student::first();
+        $csv = self::HEADER."Wali NIS Campur,wali_nis_campur,,wali_murid,,\"{$student->nis}, NIS_TIDAK_ADA\",rahasia123\n";
+
+        $response = $this->importCsv($this->admin, $csv);
+
+        $response->assertSessionHasErrors();
+        $this->assertDatabaseMissing('users', ['username' => 'wali_nis_campur']);
     }
 
     public function test_import_updates_existing_user_and_keeps_password_when_blank(): void

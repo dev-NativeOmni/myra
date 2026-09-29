@@ -6,19 +6,21 @@ use App\Models\Institution;
 use App\Models\MonthlyReport;
 use App\Models\ReportRecord;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class ParentPortalController extends Controller
 {
     /**
-     * Display parent dashboard with child's reports.
+     * Display the parent dashboard for one of their linked children.
+     * Parents with several children switch between them with ?student={id}.
      */
-    public function dashboard(): View
+    public function dashboard(Request $request): View
     {
-        $user = Auth::user();
-        $student = $user->student;
+        $user = $request->user();
+        $children = $user->children()->with('classroom')->get();
+        $student = $children->firstWhere('id', (int) $request->query('student')) ?? $children->first();
 
         $reports = collect();
         $trends = null;
@@ -33,25 +35,26 @@ class ParentPortalController extends Controller
 
         $latestReport = $reports->first();
 
-        return view('parent.dashboard', compact('user', 'student', 'reports', 'latestReport', 'trends'));
+        return view('parent.dashboard', compact('user', 'children', 'student', 'reports', 'latestReport', 'trends'));
     }
 
     /**
-     * Preview PDF specifically for child's report.
+     * Preview the PDF of a published report belonging to one of the parent's children.
      */
-    public function previewReport($reportId): Response
+    public function previewReport(Request $request, $reportId): Response
     {
-        $user = Auth::user();
-        $student = $user->student;
+        $childIds = $request->user()->children()->pluck('students.id');
 
-        if (! $student) {
+        if ($childIds->isEmpty()) {
             abort(403, 'Akun Anda belum terhubung dengan data santri.');
         }
 
         $report = MonthlyReport::with(['student.classroom', 'record'])
-            ->where('student_id', $student->id)
+            ->whereIn('student_id', $childIds)
+            ->where('status', 'published')
             ->where('id', $reportId)
             ->firstOrFail();
+        $student = $report->student;
 
         $record = $report->record ?? new ReportRecord;
         $institution = Institution::first() ?? new Institution([

@@ -116,7 +116,7 @@ class StudentProgressTrendTest extends TestCase
     public function test_parent_can_view_monthly_trend_charts_in_parent_dashboard(): void
     {
         // Link parent user to student
-        $this->waliMurid->update(['student_id' => $this->student->id]);
+        $this->waliMurid->children()->sync([$this->student->id]);
 
         $response = $this->actingAs($this->waliMurid)->get(route('parent.dashboard'));
         $response->assertStatus(200);

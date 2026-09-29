@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Classroom;
+use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\SampleDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -121,5 +122,47 @@ class UserManagementTest extends TestCase
 
         $response->assertSessionHasErrors('password');
         $this->assertSame($originalHash, $user->fresh()->password);
+    }
+
+    public function test_creating_a_parent_links_all_selected_children(): void
+    {
+        $children = Student::take(2)->pluck('id')->sort()->values();
+
+        $this->actingAs($this->superAdmin)->post(route('users.store'), [
+            'name' => 'Wali Dua Anak',
+            'username' => 'wali_dua_anak',
+            'password' => 'password123',
+            'role' => User::ROLE_WALI_MURID,
+            'student_ids' => $children->all(),
+        ]);
+
+        $parent = User::where('username', 'wali_dua_anak')->firstOrFail();
+        $this->assertSame($children->all(), $parent->children->pluck('id')->sort()->values()->all());
+    }
+
+    public function test_creating_a_parent_without_children_is_rejected(): void
+    {
+        $response = $this->actingAs($this->superAdmin)->post(route('users.store'), [
+            'name' => 'Wali Tanpa Anak',
+            'username' => 'wali_tanpa_anak',
+            'password' => 'password123',
+            'role' => User::ROLE_WALI_MURID,
+        ]);
+
+        $response->assertSessionHasErrors('student_ids');
+        $this->assertDatabaseMissing('users', ['username' => 'wali_tanpa_anak']);
+    }
+
+    public function test_changing_a_parent_to_staff_role_unlinks_children(): void
+    {
+        $parent = User::where('role', User::ROLE_WALI_MURID)->has('children')->firstOrFail();
+
+        $this->actingAs($this->superAdmin)->put(route('users.update', $parent), [
+            'name' => $parent->name,
+            'username' => $parent->username,
+            'role' => User::ROLE_TU,
+        ]);
+
+        $this->assertTrue($parent->fresh()->children->isEmpty());
     }
 }

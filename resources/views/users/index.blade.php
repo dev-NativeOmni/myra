@@ -75,7 +75,7 @@
                     <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
                         <li><strong>Peran</strong> diisi kode: <code class="text-slate-700">admin, guru, wali_kelas, kesantrian, tu, wali_murid</code>@if(auth()->user()->isSuperAdmin())<code class="text-slate-700">, super_admin</code>@endif.</li>
                         <li><strong>Kelas</strong> untuk guru, wali_kelas, dan kesantrian; beberapa kelas dipisah koma, contoh <code class="text-slate-700">1, 2</code>.</li>
-                        <li><strong>NIS Santri</strong> wajib untuk wali_murid, untuk menautkan akun ke santri.</li>
+                        <li><strong>NIS Santri</strong> wajib untuk wali_murid. Wali dengan beberapa anak cukup satu baris; NIS dipisah koma, contoh <code class="text-slate-700">2026001, 2026002</code>.</li>
                         <li><strong>Password</strong> wajib untuk akun baru (min. 8 karakter). Kosongkan untuk akun lama agar password tidak berubah.</li>
                         <li>Hapus file Excel berisi password setelah impor selesai.</li>
                     </ul>
@@ -149,9 +149,12 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-xs">
-                                @if($u->role === 'wali_murid' && $u->student)
-                                    <span class="text-slate-800 font-medium">Orang tua dari: {{ $u->student->name }}</span>
-                                    <span class="text-slate-400 block font-mono text-[11px]">NIS: {{ $u->student->nis }} &bull; Kelas {{ $u->student->classroom->name ?? '-' }}</span>
+                                @if($u->role === 'wali_murid' && $u->children->isNotEmpty())
+                                    <span class="text-slate-400 block text-[11px]">Orang tua dari:</span>
+                                    @foreach($u->children as $child)
+                                        <span class="text-slate-800 font-medium block">{{ $child->name }}</span>
+                                        <span class="text-slate-400 block font-mono text-[11px]">NIS: {{ $child->nis }} &bull; Kelas {{ $child->classroom->name ?? '-' }}</span>
+                                    @endforeach
                                 @elseif($u->role === 'wali_murid')
                                     <span class="text-amber-600 italic">Belum ditautkan ke santri</span>
                                 @elseif(in_array($u->role, \App\Models\User::CLASSROOM_SCOPED_ROLES, true))

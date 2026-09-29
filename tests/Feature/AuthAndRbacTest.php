@@ -132,13 +132,14 @@ class AuthAndRbacTest extends TestCase
 
     public function test_wali_murid_can_access_child_report_and_forbidden_from_admin(): void
     {
-        $parent = User::where('role', User::ROLE_WALI_MURID)->first();
-        $report = MonthlyReport::where('student_id', $parent->student_id)->first();
+        $parent = User::where('role', User::ROLE_WALI_MURID)->has('children')->firstOrFail();
+        $child = $parent->children->first();
+        $report = MonthlyReport::where('student_id', $child->id)->where('status', 'published')->firstOrFail();
 
         // Can access Parent Dashboard
         $dashboardResponse = $this->actingAs($parent)->get(route('parent.dashboard'));
         $dashboardResponse->assertStatus(200);
-        $dashboardResponse->assertSee($parent->student->name);
+        $dashboardResponse->assertSee($child->name);
 
         // Can preview child's PDF
         $pdfResponse = $this->actingAs($parent)->get(route('parent.reports.preview', $report->id));

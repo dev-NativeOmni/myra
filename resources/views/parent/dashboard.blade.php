@@ -216,6 +216,22 @@
             </p>
         </div>
     @else
+        @if($children->count() > 1)
+            <!-- Child Switcher (parents with several children) -->
+            <nav aria-label="Pilih ananda" class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+                <div class="flex gap-2 w-max">
+                    @foreach($children as $child)
+                        <a href="{{ route('parent.dashboard', ['student' => $child->id]) }}"
+                           @if($child->is($student)) aria-current="page" @endif
+                           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition whitespace-nowrap {{ $child->is($student) ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs' : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-400 hover:text-emerald-700' }}">
+                            <span>{{ $child->name }}</span>
+                            <span class="{{ $child->is($student) ? 'text-emerald-100' : 'text-slate-400' }} font-normal">Kelas {{ $child->classroom->name ?? '-' }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </nav>
+        @endif
+
         <!-- Student Profile Card -->
         <div class="p-6 rounded-2xl bg-linear-to-r from-emerald-800 to-teal-900 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>

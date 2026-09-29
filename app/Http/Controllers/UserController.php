@@ -81,7 +81,7 @@ class UserController extends Controller
      */
     private function filteredUsers(Request $request): Builder
     {
-        return User::with(['student', 'classrooms'])
+        return User::with(['children.classroom', 'classrooms'])
             ->when($request->filled('role'), fn (Builder $query) => $query->where('role', $request->role))
             ->when($request->filled('search'), fn (Builder $query) => $query->where(function (Builder $query) use ($request) {
                 $query->whereLike('name', "%{$request->search}%")
@@ -95,7 +95,7 @@ class UserController extends Controller
      */
     public function create(): View
     {
-        $students = Student::where('is_active', true)->orderBy('name')->get();
+        $students = Student::where('is_active', true)->with('classroom')->orderBy('name')->get();
         $classrooms = Classroom::orderBy('name')->get();
         $currentUser = Auth::user();
 
@@ -129,13 +129,15 @@ class UserController extends Controller
             'email' => 'nullable|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
             'role' => ['required', Rule::in($allowedRoles)],
-            'student_id' => 'nullable|required_if:role,wali_murid|exists:students,id',
+            'student_ids' => 'nullable|required_if:role,wali_murid|array',
+            'student_ids.*' => 'exists:students,id',
             'classroom_ids' => 'nullable|array',
             'classroom_ids.*' => 'exists:classrooms,id',
         ]);
 
         $classroomIds = $validated['classroom_ids'] ?? [];
-        unset($validated['classroom_ids']);
+        $studentIds = $validated['student_ids'] ?? [];
+        unset($validated['classroom_ids'], $validated['student_ids']);
 
         $validated['password'] = Hash::make($validated['password']);
 
@@ -143,6 +145,10 @@ class UserController extends Controller
 
         if (in_array($user->role, User::CLASSROOM_SCOPED_ROLES, true)) {
             $user->classrooms()->sync($classroomIds);
+        }
+
+        if ($user->role === User::ROLE_WALI_MURID) {
+            $user->children()->sync($studentIds);
         }
 
         return redirect()->route('users.index')->with('success', "Pengguna {$validated['name']} (@{$validated['username']}) berhasil ditambahkan.");
@@ -153,7 +159,7 @@ class UserController extends Controller
      */
     public function edit(User $user): View
     {
-        $students = Student::where('is_active', true)->orderBy('name')->get();
+        $students = Student::where('is_active', true)->with('classroom')->orderBy('name')->get();
         $classrooms = Classroom::orderBy('name')->get();
         $currentUser = Auth::user();
 
@@ -196,13 +202,15 @@ class UserController extends Controller
             'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'nullable|string|min:8',
             'role' => ['required', Rule::in($allowedRoles)],
-            'student_id' => 'nullable|required_if:role,wali_murid|exists:students,id',
+            'student_ids' => 'nullable|required_if:role,wali_murid|array',
+            'student_ids.*' => 'exists:students,id',
             'classroom_ids' => 'nullable|array',
             'classroom_ids.*' => 'exists:classrooms,id',
         ]);
 
         $classroomIds = $validated['classroom_ids'] ?? [];
-        unset($validated['classroom_ids']);
+        $studentIds = $validated['student_ids'] ?? [];
+        unset($validated['classroom_ids'], $validated['student_ids']);
 
         if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -210,15 +218,12 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        if ($validated['role'] !== User::ROLE_WALI_MURID) {
-            $validated['student_id'] = null;
-        }
-
         $user->update($validated);
 
         $user->classrooms()->sync(
             in_array($user->role, User::CLASSROOM_SCOPED_ROLES, true) ? $classroomIds : []
         );
+        $user->children()->sync($user->role === User::ROLE_WALI_MURID ? $studentIds : []);
 
         return redirect()->route('users.index')->with('success', "Data pengguna {$user->name} berhasil diperbarui.");
     }

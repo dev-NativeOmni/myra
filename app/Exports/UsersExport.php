@@ -43,7 +43,7 @@ class UsersExport implements FromCollection, ShouldAutoSize, WithHeadings, WithM
             $user->email,
             $user->role,
             $user->classrooms->pluck('name')->implode(', '),
-            $user->student?->nis,
+            $user->children->pluck('nis')->implode(', '),
             null,
         ];
     }

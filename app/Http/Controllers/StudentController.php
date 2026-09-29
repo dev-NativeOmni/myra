@@ -107,7 +107,7 @@ class StudentController extends Controller
     {
         abort_unless($request->user()->canViewClassroom($student->classroom_id), 403, 'Akses Ditolak: Anda tidak bertanggung jawab atas kelas santri ini.');
 
-        $student->load(['classroom', 'monthlyReports.record', 'parentUser', 'tahfidzJournals']);
+        $student->load(['classroom', 'monthlyReports.record', 'parents', 'tahfidzJournals']);
         $trends = $student->getProgressTrends();
         $reports = $student->monthlyReports()->with('record')->orderBy('report_date', 'desc')->get();
         $latestReport = $reports->first();

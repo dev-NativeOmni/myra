@@ -6,8 +6,8 @@ use App\Services\StudentProgressService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Student extends Model
 {
@@ -42,11 +42,13 @@ class Student extends Model
     }
 
     /**
-     * Get the parent user associated with the student.
+     * Parent (Wali Murid) accounts linked to this student.
      */
-    public function parentUser(): HasOne
+    public function parents(): BelongsToMany
     {
-        return $this->hasOne(User::class, 'student_id')->where('role', User::ROLE_WALI_MURID);
+        return $this->belongsToMany(User::class, 'parent_student')
+            ->where('role', User::ROLE_WALI_MURID)
+            ->withTimestamps();
     }
 
     /**

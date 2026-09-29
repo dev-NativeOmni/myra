@@ -266,12 +266,14 @@
 
             <div class="text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 md:text-right">
                 <span class="text-slate-400 block mb-0.5">Akun Wali Santri Terhubung:</span>
-                @if($student->parentUser)
-                    <span class="font-bold text-slate-800">{{ $student->parentUser->name }}</span>
-                    <span class="block text-[11px] text-slate-400 font-mono">{{ $student->parentUser->email }}</span>
-                @else
+                @forelse($student->parents as $parent)
+                    <div class="{{ $loop->first ? '' : 'mt-1.5' }}">
+                        <span class="font-bold text-slate-800">{{ $parent->name }}</span>
+                        <span class="block text-[11px] text-slate-400 font-mono">{{ '@'.$parent->username }}{{ $parent->email ? ' • '.$parent->email : '' }}</span>
+                    </div>
+                @empty
                     <span class="text-slate-400 italic">Belum ditautkan</span>
-                @endif
+                @endforelse
             </div>
         </div>
     </div>

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -52,7 +51,6 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'student_id',
     ];
 
     /**
@@ -79,11 +77,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the student associated with the parent (Wali Murid).
+     * Students (children) linked to this parent (Wali Murid) account.
+     * A parent with several children at the institution sees all of them.
      */
-    public function student(): BelongsTo
+    public function children(): BelongsToMany
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsToMany(Student::class, 'parent_student')->withTimestamps()->orderBy('name');
     }
 
     /**

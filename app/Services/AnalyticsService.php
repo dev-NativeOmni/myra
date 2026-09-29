@@ -125,7 +125,7 @@ class AnalyticsService
      */
     public function getEarlyWarningStudents(?int $limit = null, ?int $classroomId = null): array
     {
-        $studentsQuery = Student::where('is_active', true)->with(['classroom', 'parentUser']);
+        $studentsQuery = Student::where('is_active', true)->with(['classroom', 'parents']);
 
         if ($classroomId) {
             $studentsQuery->where('classroom_id', $classroomId);
@@ -221,7 +221,7 @@ class AnalyticsService
                 }
 
                 // Format WhatsApp URL for quick parent contact
-                $parentPhone = $student->parent_phone ?: ($student->parentUser?->phone ?? '');
+                $parentPhone = $student->parent_phone ?: ($student->parents->first()?->phone ?? '');
                 // Clean phone number (e.g. 0812... -> 62812...)
                 $cleanPhone = preg_replace('/[^0-9]/', '', $parentPhone);
                 if (str_starts_with($cleanPhone, '0')) {

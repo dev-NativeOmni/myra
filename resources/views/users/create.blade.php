@@ -49,23 +49,12 @@
         </div>
 
         <!-- Student Selector (only visible if role == wali_murid) -->
-        <div id="student-picker" class="{{ old('role') == 'wali_murid' ? '' : 'hidden' }}">
-            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tautkan ke Data Santri (Wajib untuk Wali Murid) <span class="text-rose-500">*</span></label>
-            <select name="student_id"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition bg-white">
-                <option value="">-- Pilih Santri --</option>
-                @foreach($students as $st)
-                    <option value="{{ $st->id }}" {{ old('student_id') == $st->id ? 'selected' : '' }}>
-                        {{ $st->name }} (NIS: {{ $st->nis }} - Kelas {{ $st->classroom->name ?? '-' }})
-                    </option>
-                @endforeach
-            </select>
-        </div>
+        @include('users.partials.student-picker', ['visible' => old('role') == 'wali_murid', 'selectedStudentIds' => []])
 
         <!-- Classroom Assignment (only visible if role is guru, wali_kelas, or kesantrian) -->
         <div id="classroom-picker" class="{{ in_array(old('role'), ['guru', 'wali_kelas', 'kesantrian']) ? '' : 'hidden' }}">
             <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kelas / Halaqah Tanggung Jawab</label>
-            <p class="text-[11px] text-slate-400 mb-2">Pengguna ini hanya dapat mengedit data santri pada kelas yang dipilih. Kelas lain tetap bisa dilihat tapi tidak bisa diubah.</p>
+            <p class="text-[11px] text-slate-400 mb-2">Pengguna ini hanya dapat melihat dan mengubah data santri pada kelas yang dipilih.</p>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-slate-200 rounded-xl p-3">
                 @forelse($classrooms as $cls)
                     <label class="flex items-center gap-2 text-sm text-slate-700">

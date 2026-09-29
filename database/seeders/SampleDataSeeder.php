@@ -63,7 +63,6 @@ class SampleDataSeeder extends Seeder
                 'email' => 'superadmin@taqreer.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_SUPER_ADMIN,
-                'student_id' => null,
             ],
             [
                 'name' => 'Ustadzah Fatimah (Admin Operasional)',
@@ -71,7 +70,6 @@ class SampleDataSeeder extends Seeder
                 'email' => 'admin@taqreer.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_ADMIN,
-                'student_id' => null,
             ],
             [
                 'name' => 'Ustadz Abdullah (Guru Tahfidz)',
@@ -79,7 +77,6 @@ class SampleDataSeeder extends Seeder
                 'email' => 'guru@taqreer.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_GURU,
-                'student_id' => null,
             ],
             [
                 'name' => 'Ustadz Ibrahim (Wali Kelas)',
@@ -87,7 +84,6 @@ class SampleDataSeeder extends Seeder
                 'email' => 'walikelas@taqreer.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_WALI_KELAS,
-                'student_id' => null,
             ],
             [
                 'name' => 'Ustadz Yusuf (Wali Asrama / Kesantrian)',
@@ -95,7 +91,6 @@ class SampleDataSeeder extends Seeder
                 'email' => 'kesantrian@taqreer.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_KESANTRIAN,
-                'student_id' => null,
             ],
             [
                 'name' => 'Ustadzah Maryam (Staf TU & Keuangan)',
@@ -103,7 +98,6 @@ class SampleDataSeeder extends Seeder
                 'email' => 'tu@taqreer.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_TU,
-                'student_id' => null,
             ],
         ];
 
@@ -269,11 +263,10 @@ class SampleDataSeeder extends Seeder
                         'email' => $parentEmail,
                         'password' => Hash::make('password'),
                         'role' => User::ROLE_WALI_MURID,
-                        'student_id' => $student->id,
                     ]
-                );
+                )->children()->syncWithoutDetaching([$student->id]);
 
-                // E. Demo account alias 'walimurid' for student 1
+                // E. Demo account 'walimurid' linked to students 1 and 2, to show a parent with several children
                 if ($globalStudentIndex === 1) {
                     User::updateOrCreate(
                         ['username' => 'walimurid'],
@@ -283,9 +276,12 @@ class SampleDataSeeder extends Seeder
                             'email' => 'walimurid@taqreer.id',
                             'password' => Hash::make('password'),
                             'role' => User::ROLE_WALI_MURID,
-                            'student_id' => $student->id,
                         ]
                     );
+                }
+
+                if (in_array($globalStudentIndex, [1, 2], true)) {
+                    User::where('username', 'walimurid')->firstOrFail()->children()->syncWithoutDetaching([$student->id]);
                 }
 
                 // F. Sample Daily Tahfidz Journals
