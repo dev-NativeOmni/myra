@@ -8,6 +8,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -108,6 +109,10 @@ class TenantGatewayController extends Controller
     {
         try {
             $log = [];
+
+            // 0. Run database migrations to ensure all core tables exist
+            Artisan::call('migrate', ['--force' => true]);
+            $log[] = 'Migration: '.trim(Artisan::output());
 
             // 1. Ensure token and is_active columns exist on institutions
             if (! Schema::hasColumn('institutions', 'token')) {

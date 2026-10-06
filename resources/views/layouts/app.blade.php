@@ -120,12 +120,17 @@
         $isWaliMurid = $user?->isWaliMurid() ?? false;
         $isAdminOrSuper = $isSuperAdmin || $isAdmin;
         $responsibleClassroomIds = $user?->responsibleClassroomIds();
-        $sampleReportId = $user && ! $isWaliMurid
-            ? \App\Models\MonthlyReport::query()
-                ->when($responsibleClassroomIds !== null, fn ($query) => $query->whereHas('student', fn ($student) => $student->whereIn('classroom_id', $responsibleClassroomIds)))
-                ->latest('id')
-                ->value('id')
-            : null;
+        $sampleReportId = null;
+        try {
+            $sampleReportId = $user && ! $isWaliMurid
+                ? \App\Models\MonthlyReport::query()
+                    ->when($responsibleClassroomIds !== null, fn ($query) => $query->whereHas('student', fn ($student) => $student->whereIn('classroom_id', $responsibleClassroomIds)))
+                    ->latest('id')
+                    ->value('id')
+                : null;
+        } catch (\Throwable $e) {
+            $sampleReportId = null;
+        }
     @endphp
 
     <div class="min-h-full" x-data="sidebarLayout()" @keydown.window="onKeydown($event)">

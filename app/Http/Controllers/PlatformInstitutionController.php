@@ -17,13 +17,30 @@ class PlatformInstitutionController extends Controller
      */
     public function index(): View
     {
-        $institutions = TenantContext::withoutScope(function () {
-            return Institution::withCount(['users', 'classrooms', 'students', 'monthlyReports'])
-                ->orderBy('created_at', 'desc')
-                ->get();
-        });
+        $institutions = collect();
 
-        $currentTenant = TenantContext::getTenant();
+        try {
+            $institutions = TenantContext::withoutScope(function () {
+                return Institution::withCount(['users', 'classrooms', 'students', 'monthlyReports'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            });
+        } catch (\Throwable $e) {
+            try {
+                $institutions = TenantContext::withoutScope(function () {
+                    return Institution::orderBy('created_at', 'desc')->get();
+                });
+            } catch (\Throwable $e2) {
+                $institutions = collect();
+            }
+        }
+
+        $currentTenant = null;
+        try {
+            $currentTenant = TenantContext::getTenant();
+        } catch (\Throwable $e) {
+            // Graceful fallback
+        }
 
         return view('platform.institutions.index', compact('institutions', 'currentTenant'));
     }
