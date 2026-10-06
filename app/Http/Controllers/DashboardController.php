@@ -20,7 +20,7 @@ class DashboardController extends Controller
      */
     public function index(): View
     {
-        $institution = Institution::first();
+        $institution = Institution::current();
         $totalStudents = Student::count();
         $totalClassrooms = Classroom::count();
         $totalReports = MonthlyReport::count();

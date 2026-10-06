@@ -160,11 +160,6 @@ class TenantGatewayController extends Controller
             Classroom::whereNull('institution_id')->update(['institution_id' => $defaultInst->id]);
             Student::whereNull('institution_id')->update(['institution_id' => $defaultInst->id]);
 
-            // If empty, run seeder
-            if (User::withoutGlobalScopes()->count() <= 2) {
-                Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SampleDataSeeder', '--force' => true]);
-            }
-
             return response()->json([
                 'status' => 'success',
                 'message' => 'Database migration and default accounts setup completed successfully.',

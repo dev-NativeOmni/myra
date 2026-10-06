@@ -89,12 +89,12 @@ class AuthAndRbacTest extends TestCase
         // Logout
         $this->post(route('logout'));
 
-        // 3. Super Admin login redirects to Dashboard
+        // 3. Super Admin login redirects to Platform Institutions
         $response = $this->post(route('login.post'), [
             'username' => 'superadmin',
             'password' => 'password',
         ]);
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('platform.institutions.index'));
     }
 
     public function test_super_admin_can_access_institution_profile(): void

@@ -240,6 +240,7 @@ class User extends Authenticatable
     public function homeRouteName(): string
     {
         return match ($this->role) {
+            self::ROLE_SUPER_ADMIN => 'platform.institutions.index',
             self::ROLE_WALI_MURID => 'parent.dashboard',
             self::ROLE_GURU => 'modules.tahfidz',
             self::ROLE_WALI_KELAS => 'modules.akademik',

@@ -76,7 +76,7 @@ class MultiTenantGatewayTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('platform.institutions.index'));
     }
 
     public function test_tenant_data_isolation_between_institutions(): void
