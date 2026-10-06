@@ -99,7 +99,8 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
             // Supabase's transaction pooler (used from serverless) does not support prepared statements.
             'options' => extension_loaded('pdo_pgsql') ? array_filter([
-                PDO::ATTR_EMULATE_PREPARES => env('DB_EMULATE_PREPARES', false),
+                PDO::ATTR_EMULATE_PREPARES => filter_var(env('DB_EMULATE_PREPARES', true), FILTER_VALIDATE_BOOLEAN),
+                PDO::ATTR_TIMEOUT => 6,
             ]) : [],
         ],
 

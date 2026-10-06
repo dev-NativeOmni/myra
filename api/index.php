@@ -59,7 +59,7 @@ foreach (['app/private', 'app/public', 'fonts', 'framework/cache/data', 'framewo
 
 try {
     require __DIR__.'/../public/index.php';
-} catch (\Throwable $e) {
+} catch (Throwable $e) {
     header('Content-Type: text/html; charset=utf-8', true, 500);
     echo '<h1>Serverless Fatal Error</h1>';
     echo '<p><strong>'.htmlspecialchars($e->getMessage()).'</strong></p>';
