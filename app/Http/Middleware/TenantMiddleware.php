@@ -28,8 +28,8 @@ class TenantMiddleware
             return $next($request);
         }
 
-        // 3. Exclude public gateway, health check, and direct login post
-        if ($request->routeIs('gateway.*') || $request->is('gateway*') || $request->is('portal/*') || $request->is('up')) {
+        // 3. Exclude public gateway, health check, system setup, and direct login post
+        if ($request->routeIs('gateway.*') || $request->is('gateway*') || $request->is('portal/*') || $request->is('up') || $request->is('system/*')) {
             return $next($request);
         }
 
