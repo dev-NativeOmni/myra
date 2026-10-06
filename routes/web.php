@@ -20,6 +20,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Institution Token Gateway Routes (Public)
+Route::get('/', [TenantGatewayController::class, 'index'])->name('home');
 Route::get('/gateway', [TenantGatewayController::class, 'index'])->name('gateway.index');
 Route::post('/gateway/verify', [TenantGatewayController::class, 'verify'])->name('gateway.verify');
 Route::post('/gateway/reset', [TenantGatewayController::class, 'reset'])->name('gateway.reset');
@@ -50,7 +51,7 @@ Route::middleware('auth')->group(function () {
 
     // Super Admin & Admin: Master Data, User Management, Siklus Laporan, Batch Export, Calendar & Schedules
     Route::middleware('role:super_admin,admin')->group(function () {
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Master Data
         Route::resource('classrooms', ClassroomController::class)->except(['create', 'show', 'edit']);
