@@ -24,15 +24,26 @@ $serverlessDefaults = [
     'DB_CONNECTION' => 'pgsql',
     'DB_SSLMODE' => 'require',
     'DB_EMULATE_PREPARES' => 'true',
-    'SESSION_DRIVER' => 'database',
+    'SESSION_DRIVER' => 'cookie',
     'SESSION_SECURE_COOKIE' => 'true',
     'SESSION_ENCRYPT' => 'true',
-    'CACHE_STORE' => 'database',
+    'CACHE_STORE' => 'file',
     'QUEUE_CONNECTION' => 'sync',
     'UPLOADS_DISK' => 's3',
     'AWS_USE_PATH_STYLE_ENDPOINT' => 'true',
     'MAIL_MAILER' => 'log',
 ];
+
+// Map Supabase / Vercel DATABASE_URL or POSTGRES_URL to DB_URL if not explicitly set
+if (getenv('DB_URL') === false) {
+    if (getenv('DATABASE_URL') !== false) {
+        putenv('DB_URL='.getenv('DATABASE_URL'));
+        $_ENV['DB_URL'] = $_SERVER['DB_URL'] = getenv('DATABASE_URL');
+    } elseif (getenv('POSTGRES_URL') !== false) {
+        putenv('DB_URL='.getenv('POSTGRES_URL'));
+        $_ENV['DB_URL'] = $_SERVER['DB_URL'] = getenv('POSTGRES_URL');
+    }
+}
 
 foreach ($serverlessDefaults as $key => $value) {
     if (getenv($key) === false) {
@@ -41,11 +52,11 @@ foreach ($serverlessDefaults as $key => $value) {
     }
 }
 
-$storagePath = getenv('LARAVEL_STORAGE_PATH');
+$storagePath = getenv('LARAVEL_STORAGE_PATH') ?: '/tmp/storage';
 
 foreach (['app/private', 'app/public', 'fonts', 'framework/cache/data', 'framework/sessions', 'framework/views', 'logs'] as $directory) {
     if (! is_dir("{$storagePath}/{$directory}")) {
-        mkdir("{$storagePath}/{$directory}", 0755, true);
+        @mkdir("{$storagePath}/{$directory}", 0755, true);
     }
 }
 
