@@ -7,6 +7,7 @@ use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -51,10 +52,11 @@ class AuthController extends Controller
         }
 
         $tenantId = TenantContext::getTenantId();
+        $cleanUsername = strtolower(trim($credentials['username']));
 
         // Find user ignoring scope to inspect their institution
-        $user = TenantContext::withoutScope(function () use ($credentials) {
-            return User::where('username', $credentials['username'])->first();
+        $user = TenantContext::withoutScope(function () use ($cleanUsername) {
+            return User::whereRaw('LOWER(username) = ?', [$cleanUsername])->first();
         });
 
         if ($user) {
@@ -65,17 +67,17 @@ class AuthController extends Controller
                 ])->onlyInput('username');
             }
 
-            if (TenantContext::withoutScope(fn () => Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']], $remember))) {
+            if (Hash::check($credentials['password'], $user->password)) {
                 RateLimiter::clear($throttleKey);
                 $request->session()->regenerate();
-                $authenticatedUser = Auth::user();
+                Auth::login($user, $remember);
 
-                if ($authenticatedUser->institution) {
-                    TenantContext::setTenant($authenticatedUser->institution);
+                if ($user->institution) {
+                    TenantContext::setTenant($user->institution);
                 }
 
-                return $this->redirectBasedOnRole($authenticatedUser)
-                    ->with('success', "Selamat datang kembali, {$authenticatedUser->name} ({$authenticatedUser->role_label})!");
+                return $this->redirectBasedOnRole($user)
+                    ->with('success', "Selamat datang kembali, {$user->name} ({$user->role_label})!");
             }
         }
 
