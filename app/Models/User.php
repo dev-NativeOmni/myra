@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToInstitution;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use BelongsToInstitution, HasFactory, Notifiable;
 
     /**
      * Role Constants
@@ -46,6 +47,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'institution_id',
         'name',
         'username',
         'email',

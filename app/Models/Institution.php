@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Services\TenantContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
@@ -13,6 +15,8 @@ class Institution extends Model
 
     protected $fillable = [
         'name',
+        'token',
+        'is_active',
         'sub_title',
         'city',
         'address',
@@ -26,6 +30,10 @@ class Institution extends Model
         'term_student',
         'term_teacher',
         'term_class',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -47,6 +55,39 @@ class Institution extends Model
     protected static function booted(): void
     {
         static::saved(fn () => Cache::forget('institution:current:attributes'));
+    }
+
+    /**
+     * Relationships with scoped models.
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function classrooms(): HasMany
+    {
+        return $this->hasMany(Classroom::class);
+    }
+
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class);
+    }
+
+    public function monthlyReports(): HasMany
+    {
+        return $this->hasMany(MonthlyReport::class);
+    }
+
+    public function moduleFields(): HasMany
+    {
+        return $this->hasMany(ModuleField::class);
+    }
+
+    public function tahfidzJournals(): HasMany
+    {
+        return $this->hasMany(TahfidzJournal::class);
     }
 
     /**
@@ -88,17 +129,25 @@ class Institution extends Model
     }
 
     /**
-     * Get the single institution profile row, cached for the request lifecycle
-     * and beyond since it changes rarely but is read on nearly every page.
+     * Get the active institution profile row from TenantContext or fallback to first.
      */
     public static function current(): self
     {
-        $attributes = Cache::rememberForever(
-            'institution:current:attributes',
-            fn () => static::first()?->getAttributes() ?? []
-        );
+        $tenant = TenantContext::getTenant();
+        if ($tenant) {
+            return $tenant;
+        }
 
-        return (new static)->forceFill($attributes);
+        return static::first() ?? new static([
+            'name' => 'PONDOK PESANTREN CONTOH',
+            'city' => 'KOTA CONTOH',
+            'director_name' => 'Ust. Fulan, S.Pd.',
+            'director_title' => 'Direktur Pesantren',
+            'accent_color' => '#059669',
+            'term_student' => self::DEFAULT_TERMS['student'],
+            'term_teacher' => self::DEFAULT_TERMS['teacher'],
+            'term_class' => self::DEFAULT_TERMS['class'],
+        ]);
     }
 
     /**

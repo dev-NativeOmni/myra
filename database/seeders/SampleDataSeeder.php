@@ -9,6 +9,7 @@ use App\Models\ReportRecord;
 use App\Models\Student;
 use App\Models\TahfidzJournal;
 use App\Models\User;
+use App\Services\TenantContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -19,10 +20,11 @@ class SampleDataSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Institution Profile
+        // 1. Institution Profile (Default Primary Tenant)
         $institution = Institution::firstOrCreate(
-            ['name' => 'PONDOK PESANTREN CONTOH'],
+            ['token' => 'TAQREER-DEMO'],
             [
+                'name' => 'PONDOK PESANTREN CONTOH',
                 'sub_title' => 'Islamic Boarding School',
                 'city' => 'KOTA CONTOH',
                 'address' => 'Kota Contoh, Jawa Tengah',
@@ -30,6 +32,25 @@ class SampleDataSeeder extends Seeder
                 'director_name' => 'Ust. Fulan, S.Pd.',
                 'director_title' => 'Direktur Pesantren',
                 'accent_color' => '#059669',
+                'is_active' => true,
+            ]
+        );
+
+        TenantContext::setTenant($institution);
+
+        // Seed second sample institution for multi-tenant testing
+        $secondInstitution = Institution::firstOrCreate(
+            ['token' => 'ALHIKMAH-DEMO'],
+            [
+                'name' => 'PESANTREN TAHFIDZ AL-HIKMAH',
+                'sub_title' => 'Tahfidzul Qur\'an & Sains',
+                'city' => 'MALANG',
+                'address' => 'Jl. Pesantren No. 12, Malang',
+                'phone' => '082198765432',
+                'director_name' => 'Dr. KH. Ahmad Zaki, M.A.',
+                'director_title' => 'Pengasuh Pesantren',
+                'accent_color' => '#2563EB',
+                'is_active' => true,
             ]
         );
 
@@ -332,5 +353,7 @@ class SampleDataSeeder extends Seeder
                 $globalStudentIndex++;
             }
         }
+
+        TenantContext::clear();
     }
 }

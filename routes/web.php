@@ -11,11 +11,19 @@ use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\ModuleSettingController;
 use App\Http\Controllers\MonthlyReportController;
 use App\Http\Controllers\ParentPortalController;
+use App\Http\Controllers\PlatformInstitutionController;
 use App\Http\Controllers\ReportInputController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\TahfidzJournalController;
+use App\Http\Controllers\TenantGatewayController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+
+// Institution Token Gateway Routes (Public)
+Route::get('/gateway', [TenantGatewayController::class, 'index'])->name('gateway.index');
+Route::post('/gateway/verify', [TenantGatewayController::class, 'verify'])->name('gateway.verify');
+Route::post('/gateway/reset', [TenantGatewayController::class, 'reset'])->name('gateway.reset');
+Route::get('/portal/{token}', [TenantGatewayController::class, 'direct'])->name('gateway.direct');
 
 // Guest / Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -27,8 +35,14 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Super Admin ONLY: Profil Lembaga & White-Labeling
+    // Super Admin ONLY: Multi-Tenant Platform & Profil Lembaga
     Route::middleware('role:super_admin')->group(function () {
+        Route::get('/platform/institutions', [PlatformInstitutionController::class, 'index'])->name('platform.institutions.index');
+        Route::post('/platform/institutions', [PlatformInstitutionController::class, 'store'])->name('platform.institutions.store');
+        Route::put('/platform/institutions/{id}', [PlatformInstitutionController::class, 'update'])->name('platform.institutions.update');
+        Route::post('/platform/institutions/{id}/toggle', [PlatformInstitutionController::class, 'toggle'])->name('platform.institutions.toggle');
+        Route::post('/platform/institutions/{id}/switch', [PlatformInstitutionController::class, 'switchTenant'])->name('platform.institutions.switch');
+
         Route::get('/institution', [InstitutionController::class, 'edit'])->name('institution.edit');
         Route::put('/institution', [InstitutionController::class, 'update'])->name('institution.update');
     });

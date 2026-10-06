@@ -15,16 +15,7 @@ class InstitutionController extends Controller
      */
     public function edit(): View
     {
-        $institution = Institution::first() ?? new Institution([
-            'name' => 'PONDOK PESANTREN CONTOH',
-            'city' => 'KOTA CONTOH',
-            'director_name' => 'Ust. Fulan, S.Pd.',
-            'director_title' => 'Direktur Pesantren',
-            'accent_color' => '#059669',
-            'term_student' => Institution::DEFAULT_TERMS['student'],
-            'term_teacher' => Institution::DEFAULT_TERMS['teacher'],
-            'term_class' => Institution::DEFAULT_TERMS['class'],
-        ]);
+        $institution = Institution::current();
 
         return view('institution.edit', compact('institution'));
     }
@@ -51,7 +42,7 @@ class InstitutionController extends Controller
             'signature' => 'nullable|image|mimes:jpg,jpeg|max:2048',
         ]);
 
-        $institution = Institution::first() ?? new Institution;
+        $institution = Institution::current();
 
         $disk = Storage::disk(config('filesystems.uploads'));
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Observers\MonthlyReportObserver;
+use App\Traits\BelongsToInstitution;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,9 +13,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 #[ObservedBy(MonthlyReportObserver::class)]
 class MonthlyReport extends Model
 {
-    use HasFactory;
+    use BelongsToInstitution, HasFactory;
 
     protected $fillable = [
+        'institution_id',
         'student_id',
         'period_title',
         'report_date',

@@ -110,6 +110,7 @@
 <body class="h-full text-slate-800">
     @php
         $user = auth()->user();
+        $tenant = \App\Services\TenantContext::getTenant();
         $isSuperAdmin = $user?->isSuperAdmin() ?? false;
         $isAdmin = $user?->isAdmin() ?? false;
         $isGuru = $user?->isGuru() ?? false;
@@ -144,12 +145,13 @@
                 <!-- Brand Header -->
                 <div class="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
                     <a href="{{ $user ? route($user->homeRouteName()) : url('/') }}" class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-500/30 text-lg">
-                            T
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-lg text-lg shrink-0"
+                             style="background-color: {{ $tenant?->accent_color ?: '#059669' }}; box-shadow: 0 10px 15px -3px {{ ($tenant?->accent_color ?: '#059669') }}55;">
+                            {{ substr($tenant?->name ?? 'T', 0, 1) }}
                         </div>
-                        <div>
-                            <span class="text-base font-bold tracking-tight text-white block">Taqreer</span>
-                            <span class="text-[10px] text-emerald-400 font-medium uppercase tracking-wider block">Reporting System</span>
+                        <div class="min-w-0">
+                            <span class="text-base font-bold tracking-tight text-white block truncate">{{ $tenant?->name ?? 'Taqreer' }}</span>
+                            <span class="text-[10px] text-emerald-400 font-mono uppercase tracking-wider block truncate">Token: {{ $tenant?->token ?? 'MULTI-TENANT' }}</span>
                         </div>
                     </a>
                     <button type="button" @click="toggle()"
@@ -214,8 +216,10 @@
                             </div>
 
                             @if($isSuperAdmin)
-                                <!-- ONLY Super Admin can manage Profil Lembaga -->
-                                <x-nav-link :href="route('institution.edit')" :active="request()->routeIs('institution.*')" icon="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                <x-nav-link :href="route('platform.institutions.index')" :active="request()->routeIs('platform.institutions.*')" icon="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                    Kelola Lembaga (SaaS)
+                                </x-nav-link>
+                                <x-nav-link :href="route('institution.edit')" :active="request()->routeIs('institution.*')" icon="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z">
                                     Profil Lembaga
                                 </x-nav-link>
                             @endif

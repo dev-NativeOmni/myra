@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToInstitution;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class ModuleField extends Model
 {
-    use HasFactory;
+    use BelongsToInstitution, HasFactory;
 
     public const MODULE_TAHFIDZ = 'tahfidz';
 
@@ -26,6 +27,7 @@ class ModuleField extends Model
     ];
 
     protected $fillable = [
+        'institution_id',
         'module',
         'key',
         'label',

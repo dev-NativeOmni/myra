@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk - Taqreer Reporting System</title>
+    <title>Masuk - {{ $tenant?->name ?? 'Taqreer Reporting System' }}</title>
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -11,11 +11,25 @@
     <div class="w-full max-w-md space-y-6">
         <!-- Logo & Header -->
         <div class="text-center">
-            <div class="w-14 h-14 rounded-2xl bg-emerald-600 mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl shadow-emerald-500/25 mb-4">
-                T
+            <div class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl mb-4"
+                 style="background-color: {{ $tenant?->accent_color ?: '#059669' }}; box-shadow: 0 10px 25px -5px {{ ($tenant?->accent_color ?: '#059669') }}66;">
+                {{ substr($tenant?->name ?? 'Taqreer', 0, 1) }}
             </div>
-            <h1 class="text-2xl font-bold text-white tracking-tight">Taqreer Reporting System</h1>
+            <h1 class="text-2xl font-bold text-white tracking-tight">{{ $tenant?->name ?? 'Taqreer Reporting System' }}</h1>
             <p class="text-xs text-slate-400 mt-1">Platform Laporan Bulanan Santri & Evaluasi Berkala</p>
+
+            @if($tenant)
+                <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700 text-xs text-slate-300">
+                    <span class="w-2 h-2 rounded-full" style="background-color: {{ $tenant->accent_color ?: '#059669' }}"></span>
+                    <span>Token: <strong class="font-mono text-white">{{ $tenant->token }}</strong></span>
+                    <form action="{{ route('gateway.reset') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-[11px] text-emerald-400 hover:text-emerald-300 underline font-semibold ml-1 cursor-pointer">
+                            Ganti
+                        </button>
+                    </form>
+                </div>
+            @endif
         </div>
 
         <!-- Login Card -->
@@ -24,6 +38,12 @@
             @if(session('success'))
                 <div class="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-medium">
                     {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-medium">
+                    {{ session('error') }}
                 </div>
             @endif
 
@@ -66,9 +86,17 @@
 
             <!-- Quick Demo Role Switcher -->
             <div class="mt-6 pt-5 border-t border-slate-100">
-                <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center mb-3">
-                    Akun Uji Coba Cepat (1-Klik)
-                </p>
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Akun Uji Coba Cepat (1-Klik)
+                    </p>
+                    <form action="{{ route('gateway.reset') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-[10px] text-slate-500 hover:text-slate-800 font-medium">
+                            Ganti Lembaga
+                        </button>
+                    </form>
+                </div>
                 <div class="grid grid-cols-2 gap-1.5 text-[11px]">
                     <button type="button" onclick="setCreds('superadmin', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition">
                         <span class="font-bold block text-slate-800">Super Admin</span>
@@ -114,4 +142,3 @@
     </script>
 </body>
 </html>
-

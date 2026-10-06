@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\TenantMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,8 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         // Vercel terminates HTTPS at its edge proxy; trust it so generated URLs use https.
         $middleware->trustProxies(at: '*');
 
+        $middleware->web(append: [
+            TenantMiddleware::class,
+        ]);
+
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'tenant' => TenantMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

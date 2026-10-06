@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,9 @@ class AuthController extends Controller
             return $this->redirectBasedOnRole(Auth::user());
         }
 
-        return view('auth.login');
+        $tenant = TenantContext::getTenant();
+
+        return view('auth.login', compact('tenant'));
     }
 
     /**
@@ -47,13 +50,28 @@ class AuthController extends Controller
             ])->onlyInput('username');
         }
 
-        if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']], $remember)) {
+        $tenantId = TenantContext::getTenantId();
+
+        // If tenant is selected, search within tenant. Otherwise search globally and set tenant on match.
+        if ($tenantId !== null) {
+            $user = User::where('username', $credentials['username'])->first();
+        } else {
+            $user = TenantContext::withoutScope(function () use ($credentials) {
+                return User::where('username', $credentials['username'])->first();
+            });
+        }
+
+        if ($user && Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']], $remember)) {
             RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
-            $user = Auth::user();
+            $authenticatedUser = Auth::user();
 
-            return $this->redirectBasedOnRole($user)
-                ->with('success', "Selamat datang kembali, {$user->name} ({$user->role_label})!");
+            if ($authenticatedUser->institution) {
+                TenantContext::setTenant($authenticatedUser->institution);
+            }
+
+            return $this->redirectBasedOnRole($authenticatedUser)
+                ->with('success', "Selamat datang kembali, {$authenticatedUser->name} ({$authenticatedUser->role_label})!");
         }
 
         RateLimiter::hit($throttleKey, 300);
