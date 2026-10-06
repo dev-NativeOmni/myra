@@ -9,7 +9,9 @@
  * always take precedence over the defaults below.
  */
 $serverlessDefaults = [
+    'APP_NAME' => 'Taqreer',
     'APP_ENV' => 'production',
+    'APP_KEY' => 'base64:vuXAcS0xGgbqO+IeN9GxVzf0W/lYnYWnE1pdqluhOvM=',
     'APP_DEBUG' => 'false',
     'APP_LOCALE' => 'id',
     'LARAVEL_STORAGE_PATH' => '/tmp/storage',
@@ -26,7 +28,7 @@ $serverlessDefaults = [
     'DB_EMULATE_PREPARES' => 'true',
     'SESSION_DRIVER' => 'cookie',
     'SESSION_SECURE_COOKIE' => 'true',
-    'SESSION_ENCRYPT' => 'true',
+    'SESSION_ENCRYPT' => 'false',
     'CACHE_STORE' => 'file',
     'QUEUE_CONNECTION' => 'sync',
     'UPLOADS_DISK' => 's3',
