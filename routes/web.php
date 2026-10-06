@@ -25,7 +25,6 @@ Route::get('/gateway', [TenantGatewayController::class, 'index'])->name('gateway
 Route::post('/gateway/verify', [TenantGatewayController::class, 'verify'])->name('gateway.verify');
 Route::post('/gateway/reset', [TenantGatewayController::class, 'reset'])->name('gateway.reset');
 Route::get('/portal/{token}', [TenantGatewayController::class, 'direct'])->name('gateway.direct');
-Route::get('/system/setup', [TenantGatewayController::class, 'setup'])->name('system.setup');
 
 // Guest / Authentication Routes
 Route::middleware('guest')->group(function () {

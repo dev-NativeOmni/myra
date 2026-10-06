@@ -19,8 +19,8 @@ class ExampleTest extends TestCase
         $this->seed(SampleDataSeeder::class);
         $user = User::where('role', User::ROLE_SUPER_ADMIN)->first();
 
-        $response = $this->actingAs($user)->get('/');
+        $response = $this->actingAs($user)->get(route('dashboard'));
 
-        $response->assertStatus(200);
+        $response->assertOk();
     }
 }

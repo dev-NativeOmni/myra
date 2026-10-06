@@ -21,10 +21,21 @@ class MultiTenantGatewayTest extends TestCase
         $this->seed(SampleDataSeeder::class);
     }
 
-    public function test_guest_without_tenant_is_redirected_to_gateway(): void
+    public function test_guest_can_open_login_without_selecting_an_institution(): void
     {
         $response = $this->get('/login');
-        $response->assertRedirect(route('gateway.index'));
+
+        $response->assertOk();
+    }
+
+    public function test_logged_in_staff_opening_home_lands_on_their_own_start_page(): void
+    {
+        $this->seed(SampleDataSeeder::class);
+        $guru = User::withoutGlobalScopes()->where('role', User::ROLE_GURU)->firstOrFail();
+
+        $response = $this->actingAs($guru)->get(route('home'));
+
+        $response->assertRedirect(route('modules.tahfidz'));
     }
 
     public function test_gateway_page_renders_successfully(): void
