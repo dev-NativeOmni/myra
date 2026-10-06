@@ -12,7 +12,7 @@ $serverlessDefaults = [
     'APP_NAME' => 'Taqreer',
     'APP_ENV' => 'production',
     'APP_KEY' => 'base64:vuXAcS0xGgbqO+IeN9GxVzf0W/lYnYWnE1pdqluhOvM=',
-    'APP_DEBUG' => 'false',
+    'APP_DEBUG' => 'true',
     'APP_LOCALE' => 'id',
     'LARAVEL_STORAGE_PATH' => '/tmp/storage',
     'APP_CONFIG_CACHE' => '/tmp/config.php',
@@ -22,7 +22,7 @@ $serverlessDefaults = [
     'APP_SERVICES_CACHE' => '/tmp/services.php',
     'VIEW_COMPILED_PATH' => '/tmp/storage/framework/views',
     'LOG_CHANNEL' => 'stderr',
-    'LOG_LEVEL' => 'warning',
+    'LOG_LEVEL' => 'debug',
     'DB_CONNECTION' => 'pgsql',
     'DB_SSLMODE' => 'require',
     'DB_EMULATE_PREPARES' => 'true',
@@ -62,4 +62,12 @@ foreach (['app/private', 'app/public', 'fonts', 'framework/cache/data', 'framewo
     }
 }
 
-require __DIR__.'/../public/index.php';
+try {
+    require __DIR__.'/../public/index.php';
+} catch (\Throwable $e) {
+    header('Content-Type: text/html; charset=utf-8', true, 500);
+    echo '<h1>Serverless Fatal Error</h1>';
+    echo '<p><strong>'.htmlspecialchars($e->getMessage()).'</strong></p>';
+    echo '<p>'.htmlspecialchars($e->getFile()).':'.$e->getLine().'</p>';
+    echo '<pre>'.htmlspecialchars($e->getTraceAsString()).'</pre>';
+}
