@@ -25,6 +25,23 @@ Route::post('/gateway/verify', [TenantGatewayController::class, 'verify'])->name
 Route::post('/gateway/reset', [TenantGatewayController::class, 'reset'])->name('gateway.reset');
 Route::get('/portal/{token}', [TenantGatewayController::class, 'direct'])->name('gateway.direct');
 Route::get('/system/setup', [TenantGatewayController::class, 'setup'])->name('system.setup');
+Route::get('/debug/platform-test', function () {
+    try {
+        $institutions = \App\Services\TenantContext::withoutScope(function () {
+            return \App\Models\Institution::withCount(['users', 'classrooms', 'students', 'monthlyReports'])->get();
+        });
+        $user = \App\Models\User::where('role', 'super_admin')->first();
+        if ($user) {
+            \Illuminate\Support\Facades\Auth::login($user);
+        }
+        return view('platform.institutions.index', [
+            'institutions' => $institutions,
+            'currentTenant' => \App\Services\TenantContext::getTenant(),
+        ]);
+    } catch (\Throwable $e) {
+        return response("DIAGNOSTIC ERROR:\n" . $e->getMessage() . "\nFile: " . $e->getFile() . ":" . $e->getLine() . "\nTrace:\n" . $e->getTraceAsString(), 500, ['Content-Type' => 'text/plain']);
+    }
+});
 
 // Guest / Authentication Routes
 Route::middleware('guest')->group(function () {
