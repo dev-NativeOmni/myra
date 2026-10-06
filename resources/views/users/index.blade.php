@@ -21,7 +21,6 @@
             <select name="role" onchange="this.form.submit()"
                 class="px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition bg-white">
                 <option value="">Semua Peran (Role)</option>
-                <option value="super_admin" {{ request('role') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                 <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                 <option value="guru" {{ request('role') == 'guru' ? 'selected' : '' }}>Guru Tahfidz</option>
                 <option value="wali_kelas" {{ request('role') == 'wali_kelas' ? 'selected' : '' }}>Wali Kelas</option>
@@ -73,7 +72,7 @@
                     </p>
 
                     <ul class="text-xs text-slate-500 space-y-1 list-disc pl-4">
-                        <li><strong>Peran</strong> diisi kode: <code class="text-slate-700">admin, guru, wali_kelas, kesantrian, tu, wali_murid</code>@if(auth()->user()->isSuperAdmin())<code class="text-slate-700">, super_admin</code>@endif.</li>
+                        <li><strong>Peran</strong> diisi kode: <code class="text-slate-700">admin, guru, wali_kelas, kesantrian, tu, wali_murid</code>.</li>
                         <li><strong>Kelas</strong> untuk guru, wali_kelas, dan kesantrian; beberapa kelas dipisah koma, contoh <code class="text-slate-700">1, 2</code>.</li>
                         <li><strong>NIS Santri</strong> wajib untuk wali_murid. Wali dengan beberapa anak cukup satu baris; NIS dipisah koma, contoh <code class="text-slate-700">2026001, 2026002</code>.</li>
                         <li><strong>Password</strong> wajib untuk akun baru (min. 8 karakter). Kosongkan untuk akun lama agar password tidak berubah.</li>

@@ -14,7 +14,7 @@ class ReportInputTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected User $guru;
 
@@ -28,7 +28,7 @@ class ReportInputTest extends TestCase
     {
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
         $this->guru = User::where('role', User::ROLE_GURU)->first();
         $this->kesantrian = User::where('role', User::ROLE_KESANTRIAN)->first();
         $this->waliKelas = User::where('role', User::ROLE_WALI_KELAS)->first();
@@ -46,11 +46,11 @@ class ReportInputTest extends TestCase
     {
         $report = MonthlyReport::first();
 
-        $indexResponse = $this->actingAs($this->superAdmin)->get(route('reports.index'));
+        $indexResponse = $this->actingAs($this->admin)->get(route('reports.index'));
         $indexResponse->assertStatus(200);
         $indexResponse->assertSee('Rekapitulasi Laporan Bulanan Santri');
 
-        $showResponse = $this->actingAs($this->superAdmin)->get(route('reports.show', $report->id));
+        $showResponse = $this->actingAs($this->admin)->get(route('reports.show', $report->id));
         $showResponse->assertStatus(200);
         $showResponse->assertSee($report->student->name);
     }
@@ -61,7 +61,7 @@ class ReportInputTest extends TestCase
         $student = Student::first();
 
         // Create single
-        $singleResponse = $this->actingAs($this->superAdmin)->post(route('reports.store'), [
+        $singleResponse = $this->actingAs($this->admin)->post(route('reports.store'), [
             'mode' => 'single',
             'student_id' => $student->id,
             'period_title' => 'SEPTEMBER-OKTOBER 2026',
@@ -76,7 +76,7 @@ class ReportInputTest extends TestCase
         ]);
 
         // Create classroom batch
-        $batchResponse = $this->actingAs($this->superAdmin)->post(route('reports.store'), [
+        $batchResponse = $this->actingAs($this->admin)->post(route('reports.store'), [
             'mode' => 'classroom',
             'classroom_id' => $classroom->id,
             'period_title' => 'NOVEMBER-DESEMBER 2026',
@@ -94,7 +94,7 @@ class ReportInputTest extends TestCase
     {
         $report = MonthlyReport::first();
 
-        $response = $this->actingAs($this->superAdmin)->put(route('reports.update-record', $report->id), [
+        $response = $this->actingAs($this->admin)->put(route('reports.update-record', $report->id), [
             'tahfidz_setoran' => 'Ziyadah 2 Juz',
             'tahfidz_akumulasi' => '35 Juz',
             'tahfidz_rincian_juz' => '1-30, 1-5',

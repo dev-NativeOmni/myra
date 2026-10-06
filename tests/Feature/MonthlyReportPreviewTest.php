@@ -18,7 +18,7 @@ class MonthlyReportPreviewTest extends TestCase
     public function test_can_preview_monthly_report_pdf(): void
     {
         $this->seed(SampleDataSeeder::class);
-        $user = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $user = User::where('role', User::ROLE_ADMIN)->first();
 
         $report = MonthlyReport::first();
         $this->assertNotNull($report, 'Monthly report seed should exist');

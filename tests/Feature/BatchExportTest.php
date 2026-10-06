@@ -13,18 +13,18 @@ class BatchExportTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
     }
 
     public function test_batch_export_form_renders(): void
     {
-        $response = $this->actingAs($this->superAdmin)->get(route('reports.batch-export'));
+        $response = $this->actingAs($this->admin)->get(route('reports.batch-export'));
         $response->assertStatus(200);
         $response->assertSee('Ekspor Massal PDF Rapor');
     }
@@ -34,7 +34,7 @@ class BatchExportTest extends TestCase
         $classroom = Classroom::first();
         $report = MonthlyReport::first();
 
-        $response = $this->actingAs($this->superAdmin)->post(route('reports.batch-export.download'), [
+        $response = $this->actingAs($this->admin)->post(route('reports.batch-export.download'), [
             'period_title' => $report->period_title,
             'classroom_id' => $classroom->id,
             'format' => 'merged_pdf',
@@ -49,7 +49,7 @@ class BatchExportTest extends TestCase
         $classroom = Classroom::first();
         $report = MonthlyReport::first();
 
-        $response = $this->actingAs($this->superAdmin)->post(route('reports.batch-export.download'), [
+        $response = $this->actingAs($this->admin)->post(route('reports.batch-export.download'), [
             'period_title' => $report->period_title,
             'classroom_id' => $classroom->id,
             'format' => 'zip',

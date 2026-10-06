@@ -16,8 +16,6 @@ class ModuleSettingTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
-
     protected User $admin;
 
     protected User $guru;
@@ -32,7 +30,6 @@ class ModuleSettingTest extends TestCase
         $this->seed(SampleDataSeeder::class);
         ModuleField::seedDefaultFields();
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
         $this->admin = User::where('role', User::ROLE_ADMIN)->first() ?? User::create([
             'name' => 'Admin Staff',
             'email' => 'admin_test@taqreer.test',
@@ -46,7 +43,7 @@ class ModuleSettingTest extends TestCase
 
     public function test_admin_can_access_module_settings_page(): void
     {
-        $response = $this->actingAs($this->superAdmin)->get(route('module-settings.index'));
+        $response = $this->actingAs($this->admin)->get(route('module-settings.index'));
         $response->assertStatus(200);
         $response->assertSee('Pengaturan Modul Penilaian');
         $response->assertSee('Tahfidz Al-Qur&#039;an', false);
@@ -66,7 +63,7 @@ class ModuleSettingTest extends TestCase
 
     public function test_admin_can_create_custom_field(): void
     {
-        $response = $this->actingAs($this->superAdmin)->post(route('module-settings.store'), [
+        $response = $this->actingAs($this->admin)->post(route('module-settings.store'), [
             'module' => 'kesantrian',
             'label' => 'Kerapian Lemari & Ranjang',
             'type' => 'select',
@@ -88,7 +85,7 @@ class ModuleSettingTest extends TestCase
         $field = ModuleField::where('key', 'tahfidz_setoran')->first();
         $this->assertNotNull($field);
 
-        $response = $this->actingAs($this->superAdmin)->put(route('module-settings.update', $field->id), [
+        $response = $this->actingAs($this->admin)->put(route('module-settings.update', $field->id), [
             'label' => 'Capaian Setoran Baru (Ziyadah)',
             'type' => 'text',
             'order_index' => 1,
@@ -109,7 +106,7 @@ class ModuleSettingTest extends TestCase
         $this->assertNotNull($field);
         $this->assertTrue((bool) $field->is_active);
 
-        $response = $this->actingAs($this->superAdmin)->patch(route('module-settings.toggle', $field->id));
+        $response = $this->actingAs($this->admin)->patch(route('module-settings.toggle', $field->id));
         $response->assertRedirect();
 
         $field->refresh();
@@ -120,7 +117,7 @@ class ModuleSettingTest extends TestCase
     {
         $systemField = ModuleField::where('is_system', true)->first();
         $this->assertNotNull($systemField);
-        $resDeleteSystem = $this->actingAs($this->superAdmin)->delete(route('module-settings.destroy', $systemField->id));
+        $resDeleteSystem = $this->actingAs($this->admin)->delete(route('module-settings.destroy', $systemField->id));
         $resDeleteSystem->assertSessionHas('error');
         $this->assertDatabaseHas('module_fields', ['id' => $systemField->id]);
 
@@ -134,7 +131,7 @@ class ModuleSettingTest extends TestCase
             'order_index' => 99,
         ]);
 
-        $resDeleteCustom = $this->actingAs($this->superAdmin)->delete(route('module-settings.destroy', $customField->id));
+        $resDeleteCustom = $this->actingAs($this->admin)->delete(route('module-settings.destroy', $customField->id));
         $resDeleteCustom->assertSessionHas('success');
         $this->assertDatabaseMissing('module_fields', ['id' => $customField->id]);
     }
@@ -151,7 +148,7 @@ class ModuleSettingTest extends TestCase
             'order_index' => 10,
         ]);
 
-        $response = $this->actingAs($this->superAdmin)->post(route('module-settings.reset'), [
+        $response = $this->actingAs($this->admin)->post(route('module-settings.reset'), [
             'module' => 'tahfidz',
         ]);
 
@@ -196,19 +193,19 @@ class ModuleSettingTest extends TestCase
             ],
         ];
 
-        $resSave = $this->actingAs($this->superAdmin)->post(route('modules.batch-store'), $postData);
+        $resSave = $this->actingAs($this->admin)->post(route('modules.batch-store'), $postData);
         $resSave->assertRedirect();
 
         $rec = ReportRecord::where('monthly_report_id', $report->id)->first();
         $this->assertEquals('Sangat Rapi dan Bersih', $rec->getFieldValue('custom_kerapian_kamar'));
 
         // Check show & PDF rendering
-        $showRes = $this->actingAs($this->superAdmin)->get(route('reports.show', $report->id));
+        $showRes = $this->actingAs($this->admin)->get(route('reports.show', $report->id));
         $showRes->assertStatus(200);
         $showRes->assertSee('Kerapian Kamar');
         $showRes->assertSee('Sangat Rapi dan Bersih');
 
-        $pdfRes = $this->actingAs($this->superAdmin)->get(route('reports.preview', $report->id));
+        $pdfRes = $this->actingAs($this->admin)->get(route('reports.preview', $report->id));
         $pdfRes->assertStatus(200);
     }
 }

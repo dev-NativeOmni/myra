@@ -97,20 +97,22 @@ class AuthAndRbacTest extends TestCase
         $response->assertRedirect(route('platform.institutions.index'));
     }
 
-    public function test_super_admin_can_access_institution_profile(): void
-    {
-        $superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
-
-        $response = $this->actingAs($superAdmin)->get(route('institution.edit'));
-        $response->assertStatus(200);
-    }
-
-    public function test_admin_is_forbidden_from_institution_profile(): void
+    public function test_institution_admin_manages_institution_profile(): void
     {
         $admin = User::where('role', User::ROLE_ADMIN)->first();
 
         $response = $this->actingAs($admin)->get(route('institution.edit'));
-        $response->assertStatus(403);
+
+        $response->assertOk();
+    }
+
+    public function test_platform_super_admin_cannot_open_institution_pages_directly(): void
+    {
+        $superAdmin = User::withoutGlobalScopes()->where('role', User::ROLE_SUPER_ADMIN)->firstOrFail();
+
+        foreach (['institution.edit', 'dashboard', 'students.index', 'users.index', 'reports.index'] as $routeName) {
+            $this->actingAs($superAdmin)->get(route($routeName))->assertForbidden();
+        }
     }
 
     public function test_guru_tahfidz_access_boundaries(): void
@@ -153,14 +155,14 @@ class AuthAndRbacTest extends TestCase
 
     public function test_user_management_crud(): void
     {
-        $superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $admin = User::where('role', User::ROLE_ADMIN)->first();
 
         // Index
-        $response = $this->actingAs($superAdmin)->get(route('users.index'));
+        $response = $this->actingAs($admin)->get(route('users.index'));
         $response->assertStatus(200);
 
         // Store
-        $storeResponse = $this->actingAs($superAdmin)->post(route('users.store'), [
+        $storeResponse = $this->actingAs($admin)->post(route('users.store'), [
             'name' => 'Guru Baru',
             'username' => 'gurubaru',
             'email' => 'gurubaru@taqreer.id',

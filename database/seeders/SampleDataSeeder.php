@@ -122,8 +122,10 @@ class SampleDataSeeder extends Seeder
             ],
         ];
 
+        // Unscoped: the platform Super Admin belongs to no institution, so a tenant-scoped
+        // lookup would miss it and try to create a second one on re-runs.
         foreach ($staffUsers as $sUser) {
-            User::updateOrCreate(
+            User::withoutGlobalScopes()->updateOrCreate(
                 ['username' => $sUser['username']],
                 $sUser
             );

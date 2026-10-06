@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ImpersonationLog;
 use App\Models\User;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
@@ -74,6 +75,8 @@ class AuthController extends Controller
 
                 if ($user->institution) {
                     TenantContext::setTenant($user->institution);
+                } else {
+                    TenantContext::clear();
                 }
 
                 return $this->redirectBasedOnRole($user)
@@ -93,6 +96,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request): RedirectResponse
     {
+        // Logging out in the middle of a support session still closes its log entry.
+        if ($logId = $request->session()->get(ImpersonationController::LOG_KEY)) {
+            ImpersonationLog::whereKey($logId)->whereNull('ended_at')->update(['ended_at' => now()]);
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

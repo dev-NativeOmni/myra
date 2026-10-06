@@ -23,7 +23,7 @@ class MasterDataTest extends TestCase
     {
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
-        $this->user = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->user = User::where('role', User::ROLE_ADMIN)->first();
     }
 
     public function test_dashboard_renders_correctly(): void

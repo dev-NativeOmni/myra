@@ -15,7 +15,7 @@ class StudentProgressTrendTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected User $guru;
 
@@ -30,7 +30,7 @@ class StudentProgressTrendTest extends TestCase
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
         $this->guru = User::where('role', User::ROLE_GURU)->first();
         $this->waliMurid = User::where('role', User::ROLE_WALI_MURID)->first();
         $this->student = Student::first();
@@ -100,7 +100,7 @@ class StudentProgressTrendTest extends TestCase
 
     public function test_admin_and_staff_can_access_student_show_profile_and_trends(): void
     {
-        $responseAdmin = $this->actingAs($this->superAdmin)->get(route('students.show', $this->student->id));
+        $responseAdmin = $this->actingAs($this->admin)->get(route('students.show', $this->student->id));
         $responseAdmin->assertStatus(200);
         $responseAdmin->assertSee('Profil &amp; Tren Progres Santri', false);
         $responseAdmin->assertSee($this->student->name);

@@ -55,4 +55,25 @@ class CreateSuperAdminTest extends TestCase
 
         $this->assertSame(1, User::where('username', 'direktur')->count());
     }
+
+    public function test_refuses_to_create_a_second_super_admin(): void
+    {
+        User::factory()->create(['role' => User::ROLE_SUPER_ADMIN, 'username' => 'platform']);
+
+        $this->artisan('app:create-super-admin', ['username' => 'kedua'])
+            ->expectsOutputToContain('Hanya boleh ada satu Super Admin')
+            ->assertFailed();
+
+        $this->assertSame(1, User::withoutGlobalScopes()->where('role', User::ROLE_SUPER_ADMIN)->count());
+    }
+
+    public function test_super_admin_is_not_attached_to_any_institution(): void
+    {
+        $this->artisan('app:create-super-admin', ['username' => 'platform'])
+            ->expectsQuestion('Password (minimal 8 karakter)', 'rahasia-kuat')
+            ->expectsQuestion('Ulangi password', 'rahasia-kuat')
+            ->assertSuccessful();
+
+        $this->assertNull(User::withoutGlobalScopes()->where('username', 'platform')->value('institution_id'));
+    }
 }

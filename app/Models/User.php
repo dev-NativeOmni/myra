@@ -15,6 +15,25 @@ class User extends Authenticatable
     use BelongsToInstitution, HasFactory, Notifiable;
 
     /**
+     * The platform Super Admin belongs to no institution. Registered after the
+     * BelongsToInstitution hook, which would otherwise assign the active one.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            if ($user->isSuperAdmin()) {
+                $user->institution_id = null;
+            }
+        });
+
+        static::creating(function (User $user): void {
+            if ($user->isSuperAdmin()) {
+                $user->institution_id = null;
+            }
+        });
+    }
+
+    /**
      * Role Constants
      */
     public const ROLE_SUPER_ADMIN = 'super_admin';
@@ -215,14 +234,14 @@ class User extends Authenticatable
     }
 
     /**
-     * Roles this user may assign when creating or editing accounts.
-     * Only a Super Admin may grant the Super Admin role.
+     * Roles an institution Admin may assign to accounts of their institution.
+     * The single platform Super Admin is never assignable.
      *
      * @return list<string>
      */
     public function assignableRoles(): array
     {
-        $roles = [
+        return [
             self::ROLE_ADMIN,
             self::ROLE_GURU,
             self::ROLE_WALI_KELAS,
@@ -230,8 +249,6 @@ class User extends Authenticatable
             self::ROLE_TU,
             self::ROLE_WALI_MURID,
         ];
-
-        return $this->isSuperAdmin() ? [self::ROLE_SUPER_ADMIN, ...$roles] : $roles;
     }
 
     /**

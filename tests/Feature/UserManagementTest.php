@@ -13,21 +13,21 @@ class UserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
     }
 
     public function test_creating_a_classroom_scoped_user_assigns_selected_classrooms(): void
     {
         $classrooms = Classroom::take(2)->pluck('id');
 
-        $response = $this->actingAs($this->superAdmin)->post(route('users.store'), [
+        $response = $this->actingAs($this->admin)->post(route('users.store'), [
             'name' => 'Ustadz Baru',
             'username' => 'ustadz_baru',
             'email' => 'ustadz.baru@example.com',
@@ -46,7 +46,7 @@ class UserManagementTest extends TestCase
     {
         $classrooms = Classroom::take(2)->pluck('id');
 
-        $this->actingAs($this->superAdmin)->post(route('users.store'), [
+        $this->actingAs($this->admin)->post(route('users.store'), [
             'name' => 'Staf TU Baru',
             'username' => 'tu_baru',
             'email' => 'tu.baru@example.com',
@@ -67,7 +67,7 @@ class UserManagementTest extends TestCase
 
         $newClassroomIds = $allClassrooms->skip(1)->take(2)->all();
 
-        $this->actingAs($this->superAdmin)->put(route('users.update', $guru->id), [
+        $this->actingAs($this->admin)->put(route('users.update', $guru->id), [
             'name' => $guru->name,
             'username' => $guru->username,
             'email' => $guru->email,
@@ -84,7 +84,7 @@ class UserManagementTest extends TestCase
         $guru = User::where('role', User::ROLE_GURU)->first();
         $guru->classrooms()->sync(Classroom::pluck('id'));
 
-        $this->actingAs($this->superAdmin)->put(route('users.update', $guru->id), [
+        $this->actingAs($this->admin)->put(route('users.update', $guru->id), [
             'name' => $guru->name,
             'username' => $guru->username,
             'email' => $guru->email,
@@ -97,7 +97,7 @@ class UserManagementTest extends TestCase
 
     public function test_creating_a_user_rejects_password_shorter_than_eight_characters(): void
     {
-        $response = $this->actingAs($this->superAdmin)->post(route('users.store'), [
+        $response = $this->actingAs($this->admin)->post(route('users.store'), [
             'name' => 'Wali Baru',
             'username' => 'wali_baru',
             'password' => 'pass123',
@@ -113,7 +113,7 @@ class UserManagementTest extends TestCase
         $user = User::where('role', User::ROLE_TU)->firstOrFail();
         $originalHash = $user->password;
 
-        $response = $this->actingAs($this->superAdmin)->put(route('users.update', $user), [
+        $response = $this->actingAs($this->admin)->put(route('users.update', $user), [
             'name' => $user->name,
             'username' => $user->username,
             'password' => 'pass123',
@@ -128,7 +128,7 @@ class UserManagementTest extends TestCase
     {
         $children = Student::take(2)->pluck('id')->sort()->values();
 
-        $this->actingAs($this->superAdmin)->post(route('users.store'), [
+        $this->actingAs($this->admin)->post(route('users.store'), [
             'name' => 'Wali Dua Anak',
             'username' => 'wali_dua_anak',
             'password' => 'password123',
@@ -142,7 +142,7 @@ class UserManagementTest extends TestCase
 
     public function test_creating_a_parent_without_children_is_rejected(): void
     {
-        $response = $this->actingAs($this->superAdmin)->post(route('users.store'), [
+        $response = $this->actingAs($this->admin)->post(route('users.store'), [
             'name' => 'Wali Tanpa Anak',
             'username' => 'wali_tanpa_anak',
             'password' => 'password123',
@@ -157,12 +157,25 @@ class UserManagementTest extends TestCase
     {
         $parent = User::where('role', User::ROLE_WALI_MURID)->has('children')->firstOrFail();
 
-        $this->actingAs($this->superAdmin)->put(route('users.update', $parent), [
+        $this->actingAs($this->admin)->put(route('users.update', $parent), [
             'name' => $parent->name,
             'username' => $parent->username,
             'role' => User::ROLE_TU,
         ]);
 
         $this->assertTrue($parent->fresh()->children->isEmpty());
+    }
+
+    public function test_institution_admin_cannot_create_a_super_admin(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('users.store'), [
+            'name' => 'Calon Super Admin',
+            'username' => 'calon_super',
+            'password' => 'password123',
+            'role' => User::ROLE_SUPER_ADMIN,
+        ]);
+
+        $response->assertSessionHasErrors('role');
+        $this->assertDatabaseMissing('users', ['username' => 'calon_super']);
     }
 }

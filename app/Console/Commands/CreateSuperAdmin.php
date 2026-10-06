@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 
 #[Signature('app:create-super-admin {username : Username untuk login} {--name=Super Admin : Nama tampilan} {--email= : Email (opsional)}')]
-#[Description('Buat akun Super Admin pertama tanpa menjalankan seeder data contoh')]
+#[Description('Buat satu-satunya akun Super Admin platform (tidak terikat ke lembaga mana pun)')]
 class CreateSuperAdmin extends Command
 {
     /**
@@ -17,6 +17,14 @@ class CreateSuperAdmin extends Command
      */
     public function handle(): int
     {
+        $existing = User::withoutGlobalScopes()->where('role', User::ROLE_SUPER_ADMIN)->first();
+
+        if ($existing) {
+            $this->error("Platform sudah memiliki Super Admin (@{$existing->username}). Hanya boleh ada satu Super Admin.");
+
+            return self::FAILURE;
+        }
+
         $password = $this->secret('Password (minimal 8 karakter)');
         $passwordConfirmation = $this->secret('Ulangi password');
 

@@ -85,6 +85,8 @@
             </form>
 
             <!-- Quick Demo Role Switcher -->
+            {{-- Demo accounts are only offered on local development installs, never in production. --}}
+            @if(app()->environment('local'))
             <div class="mt-6 pt-5 border-t border-slate-100">
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -98,10 +100,6 @@
                     </form>
                 </div>
                 <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-                    <button type="button" onclick="setCreds('superadmin', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition">
-                        <span class="font-bold block text-slate-800">Super Admin</span>
-                        <span class="text-[10px] text-slate-400 font-mono">superadmin</span>
-                    </button>
                     <button type="button" onclick="setCreds('admin', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition">
                         <span class="font-bold block text-slate-800">Admin</span>
                         <span class="text-[10px] text-slate-400 font-mono">admin</span>
@@ -131,6 +129,7 @@
                     </button>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 

@@ -127,7 +127,7 @@
                                 </div>
                             </div>
 
-                            @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
+                            @if(auth()->user()->isAdmin())
                                 <button type="button"
                                         @click="openTargetModal('{{ $cls->id }}', '{{ $cls->name }}', {{ $ca['target_juz'] }}, '{{ addslashes($cls->target_description ?? '') }}')"
                                         class="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"

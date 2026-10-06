@@ -16,7 +16,7 @@ class AuditLogTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected User $guru;
 
@@ -27,7 +27,7 @@ class AuditLogTest extends TestCase
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
         $this->guru = User::where('role', User::ROLE_GURU)->first();
 
         $student = Student::where('classroom_id', Classroom::first()->id)->first();
@@ -86,12 +86,12 @@ class AuditLogTest extends TestCase
 
     public function test_publishing_records_the_status_change_and_who_did_it(): void
     {
-        $this->actingAs($this->superAdmin);
+        $this->actingAs($this->admin);
         $this->report->update(['status' => 'published']);
 
         $log = AuditLog::where('field', 'status')->first();
 
-        $this->assertSame($this->superAdmin->id, $log->user_id);
+        $this->assertSame($this->admin->id, $log->user_id);
         $this->assertSame('draft', $log->old_value);
         $this->assertSame('published', $log->new_value);
     }
@@ -100,7 +100,7 @@ class AuditLogTest extends TestCase
     {
         AuditLog::factory()->create(['student_name' => 'Santri Terlihat']);
 
-        $this->actingAs($this->superAdmin)->get(route('audit-logs.index'))
+        $this->actingAs($this->admin)->get(route('audit-logs.index'))
             ->assertOk()
             ->assertSee('Santri Terlihat');
 

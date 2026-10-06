@@ -14,7 +14,7 @@ class StudentImportExportTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected User $guru;
 
@@ -25,14 +25,14 @@ class StudentImportExportTest extends TestCase
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
         $this->guru = User::where('role', User::ROLE_GURU)->first();
         $this->classroom = Classroom::where('name', '1')->first();
     }
 
     public function test_admin_can_export_students(): void
     {
-        $response = $this->actingAs($this->superAdmin)->get(route('students.export'));
+        $response = $this->actingAs($this->admin)->get(route('students.export'));
 
         $response->assertStatus(200);
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -55,7 +55,7 @@ class StudentImportExportTest extends TestCase
 
         $file = UploadedFile::fake()->createWithContent('santri.csv', $csv);
 
-        $response = $this->actingAs($this->superAdmin)->post(route('students.import'), ['file' => $file]);
+        $response = $this->actingAs($this->admin)->post(route('students.import'), ['file' => $file]);
 
         $response->assertRedirect(route('students.index'));
         $response->assertSessionHas('success');
@@ -80,7 +80,7 @@ class StudentImportExportTest extends TestCase
 
         $file = UploadedFile::fake()->createWithContent('santri.csv', $csv);
 
-        $response = $this->actingAs($this->superAdmin)->post(route('students.import'), ['file' => $file]);
+        $response = $this->actingAs($this->admin)->post(route('students.import'), ['file' => $file]);
 
         $response->assertSessionHasErrors();
         $this->assertDatabaseMissing('students', ['nis' => '9999002']);
@@ -94,7 +94,7 @@ class StudentImportExportTest extends TestCase
 
         $file = UploadedFile::fake()->createWithContent('santri.csv', $csv);
 
-        $response = $this->actingAs($this->superAdmin)->post(route('students.import'), ['file' => $file]);
+        $response = $this->actingAs($this->admin)->post(route('students.import'), ['file' => $file]);
 
         $response->assertSessionHasErrors();
         $this->assertDatabaseMissing('students', ['name' => 'Tanpa NIS']);
@@ -107,7 +107,7 @@ class StudentImportExportTest extends TestCase
 
         $file = UploadedFile::fake()->createWithContent('santri.csv', $csv);
 
-        $this->actingAs($this->superAdmin)->post(route('students.import'), ['file' => $file]);
+        $this->actingAs($this->admin)->post(route('students.import'), ['file' => $file]);
 
         $this->assertDatabaseHas('students', [
             'nis' => '00456',
@@ -117,7 +117,7 @@ class StudentImportExportTest extends TestCase
 
     public function test_admin_can_download_import_template(): void
     {
-        $response = $this->actingAs($this->superAdmin)->get(route('students.import.template'));
+        $response = $this->actingAs($this->admin)->get(route('students.import.template'));
 
         $response->assertStatus(200);
     }

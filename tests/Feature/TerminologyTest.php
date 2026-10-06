@@ -13,14 +13,14 @@ class TerminologyTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
     }
 
     public function test_terminology_defaults_match_existing_hardcoded_labels(): void
@@ -49,7 +49,7 @@ class TerminologyTest extends TestCase
 
     public function test_admin_can_override_terminology(): void
     {
-        $this->actingAs($this->superAdmin)->put(route('institution.update'), $this->validInstitutionPayload([
+        $this->actingAs($this->admin)->put(route('institution.update'), $this->validInstitutionPayload([
             'term_student' => 'Siswa',
             'term_teacher' => 'Musyrif',
             'term_class' => 'Halaqah',
@@ -62,7 +62,7 @@ class TerminologyTest extends TestCase
 
     public function test_terminology_update_rejects_values_outside_the_allowed_pair(): void
     {
-        $response = $this->actingAs($this->superAdmin)->put(route('institution.update'), $this->validInstitutionPayload([
+        $response = $this->actingAs($this->admin)->put(route('institution.update'), $this->validInstitutionPayload([
             'term_student' => 'Murid', // not one of Santri/Siswa
         ]));
 
@@ -75,7 +75,7 @@ class TerminologyTest extends TestCase
         $guru = User::where('role', User::ROLE_GURU)->first();
         $this->assertSame('Guru Tahfidz', $guru->role_label);
 
-        $this->actingAs($this->superAdmin)->put(route('institution.update'), $this->validInstitutionPayload([
+        $this->actingAs($this->admin)->put(route('institution.update'), $this->validInstitutionPayload([
             'term_teacher' => 'Musyrif',
         ]));
 
@@ -85,11 +85,11 @@ class TerminologyTest extends TestCase
 
     public function test_students_index_header_reflects_siswa_terminology(): void
     {
-        $this->actingAs($this->superAdmin)->put(route('institution.update'), $this->validInstitutionPayload([
+        $this->actingAs($this->admin)->put(route('institution.update'), $this->validInstitutionPayload([
             'term_student' => 'Siswa',
         ]));
 
-        $response = $this->actingAs($this->superAdmin)->get(route('students.index'));
+        $response = $this->actingAs($this->admin)->get(route('students.index'));
 
         $response->assertSee('Master Data Siswa');
         $response->assertDontSee('Master Data Santri');

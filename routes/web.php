@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClassroomController;
 use App\Http\Controllers\ClassScheduleController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ImpersonationController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\ModuleSettingController;
 use App\Http\Controllers\MonthlyReportController;
@@ -36,21 +37,24 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Super Admin ONLY: Multi-Tenant Platform & Profil Lembaga
-    Route::middleware('role:super_admin')->group(function () {
-        Route::get('/platform/institutions', [PlatformInstitutionController::class, 'index'])->name('platform.institutions.index');
-        Route::post('/platform/institutions', [PlatformInstitutionController::class, 'store'])->name('platform.institutions.store');
-        Route::put('/platform/institutions/{id}', [PlatformInstitutionController::class, 'update'])->name('platform.institutions.update');
-        Route::post('/platform/institutions/{id}/toggle', [PlatformInstitutionController::class, 'toggle'])->name('platform.institutions.toggle');
-        Route::post('/platform/institutions/{id}/switch', [PlatformInstitutionController::class, 'switchTenant'])->name('platform.institutions.switch');
+    // Ends a Super Admin support session; available while acting as an institution's Admin.
+    Route::post('/impersonation/stop', [ImpersonationController::class, 'stop'])->name('impersonation.stop');
+
+    // Platform Super Admin: monitors institutions, never edits their data directly.
+    Route::middleware('role:super_admin')->prefix('platform')->name('platform.')->group(function () {
+        Route::get('/institutions', [PlatformInstitutionController::class, 'index'])->name('institutions.index');
+        Route::post('/institutions', [PlatformInstitutionController::class, 'store'])->name('institutions.store');
+        Route::put('/institutions/{institution}', [PlatformInstitutionController::class, 'update'])->name('institutions.update');
+        Route::post('/institutions/{institution}/toggle', [PlatformInstitutionController::class, 'toggle'])->name('institutions.toggle');
+        Route::post('/institutions/{institution}/impersonate/{user}', [ImpersonationController::class, 'start'])->name('institutions.impersonate');
+    });
+
+    // Institution Admin: Profil Lembaga, Master Data, User Management, Siklus Laporan, Batch Export, Calendar & Schedules
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/institution', [InstitutionController::class, 'edit'])->name('institution.edit');
         Route::put('/institution', [InstitutionController::class, 'update'])->name('institution.update');
-    });
-
-    // Super Admin & Admin: Master Data, User Management, Siklus Laporan, Batch Export, Calendar & Schedules
-    Route::middleware('role:super_admin,admin')->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         // Master Data
         Route::resource('classrooms', ClassroomController::class)->except(['create', 'show', 'edit']);
@@ -69,7 +73,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('users', UserController::class);
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
-        // Jadwal Kelas & Kalender Akademik (Admin & Super Admin Updates)
+        // Jadwal Kelas & Kalender Akademik (Admin)
         Route::get('/class-schedules', [ClassScheduleController::class, 'index'])->name('class-schedules.index');
         Route::post('/class-schedules', [ClassScheduleController::class, 'update'])->name('class-schedules.update');
 
@@ -96,20 +100,20 @@ Route::middleware('auth')->group(function () {
     });
 
     // Preview PDF, Profil Santri, & Dashboard Kelengkapan Laporan for Staff & Admin
-    Route::middleware('role:super_admin,admin,guru,wali_kelas,kesantrian,tu')->group(function () {
+    Route::middleware('role:admin,guru,wali_kelas,kesantrian,tu')->group(function () {
         Route::get('/reports/{id}/preview', [MonthlyReportController::class, 'preview'])->name('reports.preview');
         Route::get('/students/{student}', [StudentController::class, 'show'])->name('students.show');
         Route::get('/reports-completeness', [MonthlyReportController::class, 'completeness'])->name('reports.completeness');
     });
 
-    // Monitoring & Analitik Lembaga (Super Admin, Admin, Guru, Wali Kelas)
-    Route::middleware('role:super_admin,admin,guru,wali_kelas')->group(function () {
+    // Monitoring & Analitik Lembaga (Admin, Guru, Wali Kelas)
+    Route::middleware('role:admin,guru,wali_kelas')->group(function () {
         Route::get('/monitoring', [AnalyticsController::class, 'index'])->name('analytics.index');
         Route::post('/monitoring/target', [AnalyticsController::class, 'updateTarget'])->name('analytics.update-target');
     });
 
-    // Modul Tahfidz & Jurnal Harian (Super Admin, Admin, Guru Tahfidz)
-    Route::middleware('role:super_admin,admin,guru')->group(function () {
+    // Modul Tahfidz & Jurnal Harian (Admin, Guru Tahfidz)
+    Route::middleware('role:admin,guru')->group(function () {
         Route::get('/tahfidz-journals/spreadsheet', [TahfidzJournalController::class, 'spreadsheet'])->name('tahfidz-journals.spreadsheet');
         Route::post('/tahfidz-journals/batch-store', [TahfidzJournalController::class, 'batchStore'])->name('tahfidz-journals.batch-store');
         Route::post('/tahfidz-journals/bulk-destroy', [TahfidzJournalController::class, 'bulkDestroy'])->name('tahfidz-journals.bulk-destroy');
@@ -119,32 +123,32 @@ Route::middleware('auth')->group(function () {
 
     // Dedicated Teacher & Staff Modules
     Route::prefix('input')->name('modules.')->group(function () {
-        // Unified Spreadsheet Matrix Input (Super Admin, Admin, Guru, Wali Kelas, Kesantrian, TU)
-        Route::middleware('role:super_admin,admin,guru,wali_kelas,kesantrian,tu')->group(function () {
+        // Unified Spreadsheet Matrix Input (Admin, Guru, Wali Kelas, Kesantrian, TU)
+        Route::middleware('role:admin,guru,wali_kelas,kesantrian,tu')->group(function () {
             Route::get('/spreadsheet', [ReportInputController::class, 'spreadsheet'])->name('spreadsheet');
             Route::post('/batch-store', [ReportInputController::class, 'batchStore'])->name('batch-store');
         });
 
         // Guru Tahfidz
-        Route::middleware('role:super_admin,admin,guru')->group(function () {
+        Route::middleware('role:admin,guru')->group(function () {
             Route::get('/tahfidz', [ReportInputController::class, 'moduleTahfidz'])->name('tahfidz');
             Route::put('/tahfidz/{id}', [ReportInputController::class, 'updateTahfidz'])->name('tahfidz.update');
         });
 
         // Kesantrian / Wali Asrama
-        Route::middleware('role:super_admin,admin,kesantrian')->group(function () {
+        Route::middleware('role:admin,kesantrian')->group(function () {
             Route::get('/kesantrian', [ReportInputController::class, 'moduleKesantrian'])->name('kesantrian');
             Route::put('/kesantrian/{id}', [ReportInputController::class, 'updateKesantrian'])->name('kesantrian.update');
         });
 
         // Wali Kelas / Akademik
-        Route::middleware('role:super_admin,admin,wali_kelas')->group(function () {
+        Route::middleware('role:admin,wali_kelas')->group(function () {
             Route::get('/akademik', [ReportInputController::class, 'moduleAkademik'])->name('akademik');
             Route::put('/akademik/{id}', [ReportInputController::class, 'updateAkademik'])->name('akademik.update');
         });
 
         // Tata Usaha / Keuangan
-        Route::middleware('role:super_admin,admin,tu')->group(function () {
+        Route::middleware('role:admin,tu')->group(function () {
             Route::get('/administrasi', [ReportInputController::class, 'moduleAdministrasi'])->name('administrasi');
             Route::put('/administrasi/{id}', [ReportInputController::class, 'updateAdministrasi'])->name('administrasi.update');
         });

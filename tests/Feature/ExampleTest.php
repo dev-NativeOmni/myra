@@ -17,7 +17,7 @@ class ExampleTest extends TestCase
     public function test_the_application_returns_a_successful_response(): void
     {
         $this->seed(SampleDataSeeder::class);
-        $user = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $user = User::where('role', User::ROLE_ADMIN)->first();
 
         $response = $this->actingAs($user)->get(route('dashboard'));
 

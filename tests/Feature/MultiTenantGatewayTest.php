@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\TenantContext;
 use Database\Seeders\SampleDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class MultiTenantGatewayTest extends TestCase
@@ -30,7 +31,6 @@ class MultiTenantGatewayTest extends TestCase
 
     public function test_logged_in_staff_opening_home_lands_on_their_own_start_page(): void
     {
-        $this->seed(SampleDataSeeder::class);
         $guru = User::withoutGlobalScopes()->where('role', User::ROLE_GURU)->firstOrFail();
 
         $response = $this->actingAs($guru)->get(route('home'));
@@ -122,26 +122,43 @@ class MultiTenantGatewayTest extends TestCase
         $this->assertFalse(Student::where('name', 'Santri Khusus Lembaga B')->exists());
     }
 
-    public function test_super_admin_can_manage_institutions(): void
+    public function test_super_admin_creates_institution_together_with_its_first_admin(): void
     {
-        $superAdmin = User::where('username', 'superadmin')->first();
+        $superAdmin = User::withoutGlobalScopes()->where('role', User::ROLE_SUPER_ADMIN)->firstOrFail();
 
-        $response = $this->actingAs($superAdmin)->get(route('platform.institutions.index'));
-        $response->assertOk();
-        $response->assertSee('Manajemen Lembaga (SaaS)');
-
-        // Create new institution
-        $storeResponse = $this->actingAs($superAdmin)->post(route('platform.institutions.store'), [
+        $response = $this->actingAs($superAdmin)->post(route('platform.institutions.store'), [
             'name' => 'Pesantren Baru',
             'token' => 'PESANTREN-BARU',
             'city' => 'Surabaya',
             'director_name' => 'K.H. Mustofa',
             'director_title' => 'Pengasuh',
             'accent_color' => '#10B981',
+            'admin_name' => 'Admin Pesantren Baru',
+            'admin_username' => 'admin_pesantren_baru',
+            'admin_password' => 'rahasia123',
         ]);
 
-        $storeResponse->assertRedirect(route('platform.institutions.index'));
-        $this->assertDatabaseHas('institutions', ['token' => 'PESANTREN-BARU']);
+        $response->assertRedirect(route('platform.institutions.index'));
+        $institution = Institution::where('token', 'PESANTREN-BARU')->firstOrFail();
+        $admin = User::withoutGlobalScopes()->where('username', 'admin_pesantren_baru')->firstOrFail();
+        $this->assertSame(User::ROLE_ADMIN, $admin->role);
+        $this->assertSame($institution->id, $admin->institution_id);
+        $this->assertTrue(Hash::check('rahasia123', $admin->password));
+    }
+
+    public function test_creating_institution_requires_its_first_admin_account(): void
+    {
+        $superAdmin = User::withoutGlobalScopes()->where('role', User::ROLE_SUPER_ADMIN)->firstOrFail();
+
+        $response = $this->actingAs($superAdmin)->post(route('platform.institutions.store'), [
+            'name' => 'Pesantren Tanpa Admin',
+            'city' => 'Surabaya',
+            'director_name' => 'K.H. Mustofa',
+            'director_title' => 'Pengasuh',
+        ]);
+
+        $response->assertSessionHasErrors(['admin_name', 'admin_username', 'admin_password']);
+        $this->assertDatabaseMissing('institutions', ['name' => 'Pesantren Tanpa Admin']);
     }
 
     public function test_gateway_reset_clears_tenant_and_logs_out(): void

@@ -29,7 +29,7 @@ class UserImportExportTest extends TestCase
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->superAdmin = User::withoutGlobalScopes()->where('role', User::ROLE_SUPER_ADMIN)->firstOrFail();
         $this->admin = User::where('role', User::ROLE_ADMIN)->first();
     }
 
@@ -163,7 +163,7 @@ class UserImportExportTest extends TestCase
         $this->assertDatabaseHas('users', ['username' => 'staf_valid', 'role' => User::ROLE_TU]);
     }
 
-    public function test_admin_cannot_create_or_modify_super_admin_via_import(): void
+    public function test_import_cannot_create_a_super_admin_or_take_over_an_outside_username(): void
     {
         $csv = self::HEADER
             ."Super Baru,super_baru,,super_admin,,,rahasia123\n"
@@ -174,15 +174,6 @@ class UserImportExportTest extends TestCase
         $response->assertSessionHasErrors();
         $this->assertDatabaseMissing('users', ['username' => 'super_baru']);
         $this->assertSame(User::ROLE_SUPER_ADMIN, $this->superAdmin->fresh()->role);
-    }
-
-    public function test_super_admin_can_create_super_admin_via_import(): void
-    {
-        $csv = self::HEADER."Super Baru,super_baru,,super_admin,,,rahasia123\n";
-
-        $this->importCsv($this->superAdmin, $csv);
-
-        $this->assertDatabaseHas('users', ['username' => 'super_baru', 'role' => User::ROLE_SUPER_ADMIN]);
     }
 
     public function test_import_cannot_change_the_importers_own_role(): void

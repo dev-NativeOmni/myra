@@ -65,6 +65,14 @@ class Institution extends Model
         return $this->hasMany(User::class);
     }
 
+    /**
+     * Admin accounts that run this institution (used by the platform for support sessions).
+     */
+    public function admins(): HasMany
+    {
+        return $this->hasMany(User::class)->withoutGlobalScope('institution')->where('role', User::ROLE_ADMIN)->orderBy('name');
+    }
+
     public function classrooms(): HasMany
     {
         return $this->hasMany(Classroom::class);

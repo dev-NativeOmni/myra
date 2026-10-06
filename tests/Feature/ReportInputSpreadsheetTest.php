@@ -14,7 +14,7 @@ class ReportInputSpreadsheetTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected User $guru;
 
@@ -31,7 +31,7 @@ class ReportInputSpreadsheetTest extends TestCase
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
         $this->guru = User::where('role', User::ROLE_GURU)->first();
         $this->kesantrian = User::where('role', User::ROLE_KESANTRIAN)->first();
         $this->waliKelas = User::where('role', User::ROLE_WALI_KELAS)->first();
@@ -49,7 +49,7 @@ class ReportInputSpreadsheetTest extends TestCase
     public function test_users_can_access_unified_spreadsheet_with_tabs(): void
     {
         // 1. Super Admin access
-        $response = $this->actingAs($this->superAdmin)->get(route('modules.spreadsheet', [
+        $response = $this->actingAs($this->admin)->get(route('modules.spreadsheet', [
             'classroom_id' => $this->classroom->id,
             'tab' => 'all',
         ]));
@@ -147,7 +147,7 @@ class ReportInputSpreadsheetTest extends TestCase
             ],
         ];
 
-        $response = $this->actingAs($this->superAdmin)->post(route('modules.batch-store'), $postData);
+        $response = $this->actingAs($this->admin)->post(route('modules.batch-store'), $postData);
         $response->assertRedirect(route('modules.spreadsheet', [
             'classroom_id' => $this->classroom->id,
             'period_title' => 'AGUSTUS 2026',

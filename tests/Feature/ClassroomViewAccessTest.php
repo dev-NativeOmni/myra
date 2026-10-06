@@ -60,7 +60,7 @@ class ClassroomViewAccessTest extends TestCase
 
     public function test_admin_can_preview_report_of_any_classroom(): void
     {
-        $admin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $admin = User::where('role', User::ROLE_ADMIN)->first();
         $report = $this->reportIn($this->otherClassroom);
 
         $response = $this->actingAs($admin)->get(route('reports.preview', $report->id));

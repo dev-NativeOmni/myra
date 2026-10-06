@@ -74,10 +74,11 @@ class UsersImport implements ToCollection, WithCustomValueBinder, WithHeadingRow
     {
         $username = $row['username'] ?? '';
         $role = $row['peran'] ?? '';
-        $user = User::where('username', $username)->first();
+        // Usernames are unique across the whole platform, so look beyond the active institution.
+        $user = User::withoutGlobalScopes()->where('username', $username)->first();
 
-        if ($user?->isSuperAdmin() && ! $this->importer->isSuperAdmin()) {
-            return "Hanya Super Admin yang dapat mengubah akun Super Admin (@{$username}).";
+        if ($user && ($user->isSuperAdmin() || $user->institution_id !== $this->importer->institution_id)) {
+            return "Username @{$username} sudah dipakai akun lain di luar lembaga Anda. Gunakan username lain.";
         }
 
         if ($user?->is($this->importer) && $role !== $user->role) {

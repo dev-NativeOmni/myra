@@ -15,7 +15,7 @@ class ReportCompletenessTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected User $superAdmin;
+    protected User $admin;
 
     protected User $waliMurid;
 
@@ -26,14 +26,14 @@ class ReportCompletenessTest extends TestCase
         parent::setUp();
         $this->seed(SampleDataSeeder::class);
 
-        $this->superAdmin = User::where('role', User::ROLE_SUPER_ADMIN)->first();
+        $this->admin = User::where('role', User::ROLE_ADMIN)->first();
         $this->waliMurid = User::where('role', User::ROLE_WALI_MURID)->first();
         $this->classroom = Classroom::first();
     }
 
     public function test_admin_can_view_completeness_dashboard(): void
     {
-        $response = $this->actingAs($this->superAdmin)->get(route('reports.completeness', [
+        $response = $this->actingAs($this->admin)->get(route('reports.completeness', [
             'classroom_id' => $this->classroom->id,
         ]));
 
@@ -97,7 +97,7 @@ class ReportCompletenessTest extends TestCase
             'tahfidz_notes' => 'Cukup',
         ]);
 
-        $response = $this->actingAs($this->superAdmin)->get(route('reports.completeness', [
+        $response = $this->actingAs($this->admin)->get(route('reports.completeness', [
             'classroom_id' => $this->classroom->id,
             'period_title' => $periodTitle,
         ]));
@@ -121,7 +121,7 @@ class ReportCompletenessTest extends TestCase
         $incomplete = $this->makeReport($students[1], $period, fullyComplete: false);
         $otherClassroom = $this->makeReport($otherStudent, $period, fullyComplete: true);
 
-        $response = $this->actingAs($this->superAdmin)->post(route('reports.publish-classroom'), [
+        $response = $this->actingAs($this->admin)->post(route('reports.publish-classroom'), [
             'classroom_id' => $this->classroom->id,
             'period_title' => $period,
         ]);
