@@ -28,20 +28,14 @@ class TenantMiddleware
             return $next($request);
         }
 
-        // 3. Exclude public gateway, health check, system setup, and direct login post
-        if ($request->routeIs('gateway.*') || $request->is('gateway*') || $request->is('portal/*') || $request->is('up') || $request->is('system/*') || $request->is('debug/*')) {
+        // 3. Exclude public gateway, login, logout, health check, and system setup
+        if ($request->routeIs('gateway.*') || $request->routeIs('login*') || $request->routeIs('logout') ||
+            $request->is('gateway*') || $request->is('portal/*') || $request->is('login*') || $request->is('logout') ||
+            $request->is('up') || $request->is('system/*') || $request->is('debug/*')) {
             return $next($request);
         }
 
-        if ($request->is('login')) {
-            if ($request->isMethod('GET') && ! TenantContext::hasTenant()) {
-                return redirect()->route('gateway.index');
-            }
-
-            return $next($request);
-        }
-
-        // 4. If guest accesses other pages without selecting an institution token
+        // 4. If guest accesses protected pages without tenant context, redirect to gateway
         if (! TenantContext::hasTenant()) {
             return redirect()->route('gateway.index');
         }

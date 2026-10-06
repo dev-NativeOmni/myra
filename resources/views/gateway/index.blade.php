@@ -75,9 +75,29 @@
                     <span>Lanjutkan &rarr;</span>
                 </button>
             </form>
+
+            <!-- Quick Demo Portal & Direct Login -->
+            <div class="pt-4 border-t border-slate-100 space-y-2">
+                <a href="{{ route('gateway.direct', 'TAQREER-DEMO') }}" class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center justify-between transition border border-emerald-200">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>Coba Lembaga Demo (TAQREER-DEMO)</span>
+                    </div>
+                    <span>&rarr;</span>
+                </a>
+
+                <div class="flex items-center justify-between text-xs pt-1 px-1">
+                    <a href="{{ route('login') }}" class="text-slate-500 hover:text-emerald-600 transition">
+                        Form Login Reguler
+                    </a>
+                    <button type="button" @click="mode = 'admin'" class="text-slate-500 hover:text-slate-900 font-medium transition">
+                        Akses Super Admin Platform
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <!-- 2. Form Login Super Admin (Hidden, revealed by clicking logo) -->
+        <!-- 2. Form Login Super Admin (Hidden, revealed by clicking logo or link) -->
         <div x-show="mode === 'admin'" x-cloak class="bg-white text-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100/10 space-y-6">
             <div class="flex items-center justify-between">
                 <div>
