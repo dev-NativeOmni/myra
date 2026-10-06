@@ -52,26 +52,31 @@ class AuthController extends Controller
 
         $tenantId = TenantContext::getTenantId();
 
-        // If tenant is selected, search within tenant. Otherwise search globally and set tenant on match.
-        if ($tenantId !== null) {
-            $user = User::where('username', $credentials['username'])->first();
-        } else {
-            $user = TenantContext::withoutScope(function () use ($credentials) {
-                return User::where('username', $credentials['username'])->first();
-            });
-        }
+        // Find user ignoring scope to inspect their institution
+        $user = TenantContext::withoutScope(function () use ($credentials) {
+            return User::where('username', $credentials['username'])->first();
+        });
 
-        if ($user && Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']], $remember)) {
-            RateLimiter::clear($throttleKey);
-            $request->session()->regenerate();
-            $authenticatedUser = Auth::user();
-
-            if ($authenticatedUser->institution) {
-                TenantContext::setTenant($authenticatedUser->institution);
+        if ($user) {
+            // If user has an institution and a different tenant is selected, ensure isolation
+            if ($tenantId !== null && $user->institution_id !== null && $user->institution_id !== $tenantId && ! $user->isSuperAdmin()) {
+                return back()->withErrors([
+                    'username' => 'Akun ini tidak terdaftar pada lembaga yang sedang dipilih.',
+                ])->onlyInput('username');
             }
 
-            return $this->redirectBasedOnRole($authenticatedUser)
-                ->with('success', "Selamat datang kembali, {$authenticatedUser->name} ({$authenticatedUser->role_label})!");
+            if (TenantContext::withoutScope(fn () => Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']], $remember))) {
+                RateLimiter::clear($throttleKey);
+                $request->session()->regenerate();
+                $authenticatedUser = Auth::user();
+
+                if ($authenticatedUser->institution) {
+                    TenantContext::setTenant($authenticatedUser->institution);
+                }
+
+                return $this->redirectBasedOnRole($authenticatedUser)
+                    ->with('success', "Selamat datang kembali, {$authenticatedUser->name} ({$authenticatedUser->role_label})!");
+            }
         }
 
         RateLimiter::hit($throttleKey, 300);
