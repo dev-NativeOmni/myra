@@ -111,7 +111,7 @@ class TahfidzJournalTest extends TestCase
 
     public function test_guru_can_access_spreadsheet_mode(): void
     {
-        $response = $this->actingAs($this->guru)->get(route('tahfidz-journals.spreadsheet'));
+        $response = $this->actingAs($this->guru)->get(route('tahfidz-journals.spreadsheet', ['classroom_id' => $this->student->classroom_id]));
         $response->assertStatus(200);
         $response->assertSee('Mode Spreadsheet');
         $response->assertSee($this->student->name);
