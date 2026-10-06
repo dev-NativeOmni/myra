@@ -151,7 +151,7 @@ class AnalyticsService
             ->get()
             ->groupBy('student_id');
 
-        $institution = Institution::first();
+        $institution = Institution::current();
         $institutionName = $institution->name ?? 'SD/MI Contoh';
 
         $warningList = [];

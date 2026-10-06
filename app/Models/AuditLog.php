@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToInstitution;
 use Database\Factories\AuditLogFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AuditLog extends Model
 {
     /** @use HasFactory<AuditLogFactory> */
-    use HasFactory, Prunable;
+    use BelongsToInstitution, HasFactory, Prunable;
 
     public const UPDATED_AT = null;
 
@@ -20,6 +21,7 @@ class AuditLog extends Model
     public const RETENTION_DAYS = 365;
 
     protected $fillable = [
+        'institution_id',
         'user_id',
         'monthly_report_id',
         'student_name',

@@ -10,10 +10,7 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
-    createModal: {{ $errors->hasAny(['name', 'token', 'city', 'director_name', 'director_title', 'admin_name', 'admin_username', 'admin_password']) ? 'true' : 'false' }},
-    editModal: false,
-    editData: { id: null, name: '', token: '', city: '', director_name: '', director_title: '', accent_color: '#059669' },
-    openEdit(inst) { this.editData = { ...inst }; this.editModal = true; }
+    createModal: {{ $errors->hasAny(['name', 'token', 'city', 'admin_name', 'admin_username', 'admin_password']) ? 'true' : 'false' }}
 }">
     <!-- Platform Metrics -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -96,13 +93,10 @@
                         @endforelse
                     </div>
 
-                    <footer class="flex gap-2 pt-1">
-                        <button type="button" @click="openEdit(@js($inst->only(['id', 'name', 'token', 'city', 'director_name', 'director_title', 'accent_color'])))"
-                                class="flex-1 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
-                            Edit Data Lembaga
-                        </button>
-                        <form method="POST" action="{{ route('platform.institutions.toggle', $inst) }}" class="flex-1"
-                              onsubmit="return confirm('{{ $inst->is_active ? 'Nonaktifkan lembaga ini? Penggunanya tidak bisa masuk lewat token lembaga.' : 'Aktifkan kembali lembaga ini?' }}')">
+                    <footer class="flex flex-col sm:flex-row sm:items-center gap-2 pt-1">
+                        <p class="flex-1 text-[11px] text-slate-400">Profil, logo, token, dan data lembaga diatur oleh admin lembaga.</p>
+                        <form method="POST" action="{{ route('platform.institutions.toggle', $inst) }}" class="sm:w-40"
+                              onsubmit="return confirm('{{ $inst->is_active ? 'Nonaktifkan lembaga ini? Semua penggunanya tidak bisa masuk sampai diaktifkan kembali.' : 'Aktifkan kembali lembaga ini?' }}')">
                             @csrf
                             <button type="submit" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border transition {{ $inst->is_active ? 'bg-white border-amber-200 text-amber-700 hover:bg-amber-50' : 'bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-50' }}">
                                 {{ $inst->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
@@ -158,23 +152,10 @@
                     <input type="text" name="token" value="{{ old('token') }}" placeholder="Kosongkan untuk dibuat otomatis" class="{{ $inputClass }} font-mono uppercase">
                     <p class="text-[11px] text-slate-400 mt-1">Dipakai guru dan wali murid untuk memilih lembaga saat masuk.</p>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="{{ $labelClass }}">Kota</label>
-                        <input type="text" name="city" value="{{ old('city') }}" required class="{{ $inputClass }}">
-                    </div>
-                    <div>
-                        <label class="{{ $labelClass }}">Warna Tema</label>
-                        <input type="color" name="accent_color" value="{{ old('accent_color', '#059669') }}" class="w-full h-10 p-1 rounded-xl border border-slate-300 cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="{{ $labelClass }}">Nama Pimpinan</label>
-                        <input type="text" name="director_name" value="{{ old('director_name') }}" required class="{{ $inputClass }}">
-                    </div>
-                    <div>
-                        <label class="{{ $labelClass }}">Jabatan Pimpinan</label>
-                        <input type="text" name="director_title" value="{{ old('director_title', 'Pengasuh Pesantren') }}" required class="{{ $inputClass }}">
-                    </div>
+                <div>
+                    <label class="{{ $labelClass }}">Kota</label>
+                    <input type="text" name="city" value="{{ old('city') }}" required class="{{ $inputClass }}">
+                    <p class="text-[11px] text-slate-400 mt-1">Pimpinan, logo, stempel, dan warna dilengkapi sendiri oleh admin lembaga di Profil Lembaga.</p>
                 </div>
 
                 <fieldset class="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-3">
@@ -204,49 +185,5 @@
         </div>
     </div>
 
-    <!-- Edit Institution Modal -->
-    <div x-show="editModal" x-cloak class="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/60" @keydown.escape.window="editModal = false">
-        <div class="bg-white w-full sm:max-w-lg max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl" @click.outside="editModal = false">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <h3 class="text-base font-bold text-slate-900">Edit Data Lembaga</h3>
-                <button type="button" @click="editModal = false" class="p-1 text-slate-400 hover:text-slate-600" aria-label="Tutup">&times;</button>
-            </div>
-
-            <form :action="'{{ url('platform/institutions') }}/' + editData.id" method="POST" class="space-y-4">
-                @csrf
-                @method('PUT')
-                <div>
-                    <label class="{{ $labelClass }}">Nama Lembaga</label>
-                    <input type="text" name="name" x-model="editData.name" required class="{{ $inputClass }}">
-                </div>
-                <div>
-                    <label class="{{ $labelClass }}">Token Akses</label>
-                    <input type="text" name="token" x-model="editData.token" required class="{{ $inputClass }} font-mono uppercase">
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="{{ $labelClass }}">Kota</label>
-                        <input type="text" name="city" x-model="editData.city" required class="{{ $inputClass }}">
-                    </div>
-                    <div>
-                        <label class="{{ $labelClass }}">Warna Tema</label>
-                        <input type="color" name="accent_color" x-model="editData.accent_color" class="w-full h-10 p-1 rounded-xl border border-slate-300 cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="{{ $labelClass }}">Nama Pimpinan</label>
-                        <input type="text" name="director_name" x-model="editData.director_name" required class="{{ $inputClass }}">
-                    </div>
-                    <div>
-                        <label class="{{ $labelClass }}">Jabatan Pimpinan</label>
-                        <input type="text" name="director_title" x-model="editData.director_title" required class="{{ $inputClass }}">
-                    </div>
-                </div>
-                <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
-                    <button type="button" @click="editModal = false" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold hover:bg-slate-200 transition">Batal</button>
-                    <button type="submit" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition">Simpan Perubahan</button>
-                </div>
-            </form>
-        </div>
-    </div>
 </div>
 @endsection

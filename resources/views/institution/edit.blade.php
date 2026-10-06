@@ -21,6 +21,14 @@
                     placeholder="Contoh: PONDOK PESANTREN CONTOH">
             </div>
 
+            <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Token Akses Lembaga <span class="text-rose-500">*</span></label>
+                <input type="text" name="token" value="{{ old('token', $institution->token) }}" required maxlength="50"
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono uppercase focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition"
+                    placeholder="Contoh: ALHIKMAH-01">
+                <p class="text-[11px] text-slate-400 mt-1">Dipakai guru dan wali murid untuk memilih lembaga Anda saat masuk. Jika diganti, beri tahu pengguna token yang baru.</p>
+            </div>
+
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Sub-Judul / Jenjang Pendidikan</label>
                 <input type="text" name="sub_title" value="{{ old('sub_title', $institution->sub_title) }}"

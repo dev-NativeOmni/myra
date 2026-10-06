@@ -68,6 +68,12 @@ class AuthController extends Controller
                 ])->onlyInput('username');
             }
 
+            if ($user->institution && ! $user->institution->is_active && Hash::check($credentials['password'], $user->password)) {
+                return back()->withErrors([
+                    'username' => 'Lembaga Anda sedang dinonaktifkan. Hubungi pengelola platform.',
+                ])->onlyInput('username');
+            }
+
             if (Hash::check($credentials['password'], $user->password)) {
                 RateLimiter::clear($throttleKey);
                 $request->session()->regenerate();

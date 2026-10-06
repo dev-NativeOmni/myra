@@ -7,8 +7,10 @@ use App\Exports\StudentsExport;
 use App\Imports\StudentsImport;
 use App\Models\Classroom;
 use App\Models\Student;
+use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -56,7 +58,7 @@ class StudentController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'nis' => 'required|string|max:50|unique:students,nis',
+            'nis' => ['required', 'string', 'max:50', Rule::unique('students', 'nis')->where('institution_id', TenantContext::getTenantId())],
             'name' => 'required|string|max:255',
             'classroom_id' => 'required|exists:classrooms,id',
             'gender' => 'required|in:L,P',
@@ -86,7 +88,7 @@ class StudentController extends Controller
     public function update(Request $request, Student $student): RedirectResponse
     {
         $validated = $request->validate([
-            'nis' => 'required|string|max:50|unique:students,nis,'.$student->id,
+            'nis' => ['required', 'string', 'max:50', Rule::unique('students', 'nis')->where('institution_id', TenantContext::getTenantId())->ignore($student->id)],
             'name' => 'required|string|max:255',
             'classroom_id' => 'required|exists:classrooms,id',
             'gender' => 'required|in:L,P',

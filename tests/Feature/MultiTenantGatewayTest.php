@@ -170,4 +170,17 @@ class MultiTenantGatewayTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect(route('gateway.index'));
     }
+
+    public function test_super_admin_cannot_edit_an_institutions_own_settings(): void
+    {
+        $superAdmin = User::withoutGlobalScopes()->where('role', User::ROLE_SUPER_ADMIN)->firstOrFail();
+        $institution = Institution::firstOrFail();
+
+        $platformEdit = $this->actingAs($superAdmin)->put('/platform/institutions/'.$institution->id, ['name' => 'Diubah Platform']);
+        $profileEdit = $this->actingAs($superAdmin)->put(route('institution.update'), ['name' => 'Diubah Platform']);
+
+        $platformEdit->assertNotFound();
+        $profileEdit->assertForbidden();
+        $this->assertNotSame('Diubah Platform', $institution->fresh()->name);
+    }
 }

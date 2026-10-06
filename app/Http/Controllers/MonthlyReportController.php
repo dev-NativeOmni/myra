@@ -128,7 +128,7 @@ class MonthlyReportController extends Controller
     public function show($id): View
     {
         $report = MonthlyReport::with(['student.classroom', 'record'])->findOrFail($id);
-        $institution = Institution::first() ?? new Institution;
+        $institution = Institution::current();
 
         return view('reports.show', compact('report', 'institution'));
     }
@@ -153,13 +153,7 @@ class MonthlyReportController extends Controller
         abort_unless($request->user()->canViewClassroom($report->student->classroom_id), 403, 'Akses Ditolak: Anda tidak bertanggung jawab atas kelas santri ini.');
         $student = $report->student;
         $record = $report->record ?? new ReportRecord;
-        $institution = Institution::first() ?? new Institution([
-            'name' => 'PONDOK PESANTREN CONTOH',
-            'city' => 'KOTA CONTOH',
-            'director_name' => 'Ust. Fulan, S.Pd.',
-            'director_title' => 'Direktur Pesantren',
-            'accent_color' => '#059669',
-        ]);
+        $institution = Institution::current();
 
         $pdf = Pdf::loadView('reports.monthly_pdf', [
             'report' => $report,
@@ -313,13 +307,7 @@ class MonthlyReportController extends Controller
             return back()->with('error', "Tidak ditemukan data laporan untuk Kelas {$classroom->name} pada periode '{$periodTitle}'.");
         }
 
-        $institution = Institution::first() ?? new Institution([
-            'name' => 'PONDOK PESANTREN CONTOH',
-            'city' => 'KOTA CONTOH',
-            'director_name' => 'Ust. Fulan, S.Pd.',
-            'director_title' => 'Direktur Pesantren',
-            'accent_color' => '#059669',
-        ]);
+        $institution = Institution::current();
 
         $cleanPeriod = str_replace([' ', '/', '\\', ':'], '_', $periodTitle);
 

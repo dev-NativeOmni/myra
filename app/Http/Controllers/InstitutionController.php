@@ -6,6 +6,7 @@ use App\Models\Institution;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class InstitutionController extends Controller
@@ -25,8 +26,11 @@ class InstitutionController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        $institution = Institution::current();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'token' => ['required', 'string', 'max:50', 'alpha_dash', Rule::unique('institutions', 'token')->ignore($institution->id)],
             'sub_title' => 'nullable|string|max:255',
             'city' => 'required|string|max:100',
             'address' => 'nullable|string',
@@ -42,7 +46,7 @@ class InstitutionController extends Controller
             'signature' => 'nullable|image|mimes:jpg,jpeg|max:2048',
         ]);
 
-        $institution = Institution::current();
+        $validated['token'] = strtoupper($validated['token']);
 
         $disk = Storage::disk(config('filesystems.uploads'));
 

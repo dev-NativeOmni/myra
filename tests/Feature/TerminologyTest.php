@@ -102,6 +102,7 @@ class TerminologyTest extends TestCase
     {
         return array_merge([
             'name' => 'PONDOK PESANTREN CONTOH',
+            'token' => $this->admin->institution->token,
             'city' => 'KOTA CONTOH',
             'director_name' => 'Ust. Fulan, S.Pd.',
             'director_title' => 'Direktur Pesantren',

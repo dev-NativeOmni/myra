@@ -44,7 +44,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:super_admin')->prefix('platform')->name('platform.')->group(function () {
         Route::get('/institutions', [PlatformInstitutionController::class, 'index'])->name('institutions.index');
         Route::post('/institutions', [PlatformInstitutionController::class, 'store'])->name('institutions.store');
-        Route::put('/institutions/{institution}', [PlatformInstitutionController::class, 'update'])->name('institutions.update');
         Route::post('/institutions/{institution}/toggle', [PlatformInstitutionController::class, 'toggle'])->name('institutions.toggle');
         Route::post('/institutions/{institution}/impersonate/{user}', [ImpersonationController::class, 'start'])->name('institutions.impersonate');
     });

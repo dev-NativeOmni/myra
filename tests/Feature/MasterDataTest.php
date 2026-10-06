@@ -49,6 +49,7 @@ class MasterDataTest extends TestCase
 
         $updateResponse = $this->actingAs($this->user)->put(route('institution.update'), [
             'name' => 'PONDOK PESANTREN CONTOH UPDATED',
+            'token' => $this->user->institution->token,
             'city' => 'SOLO',
             'director_name' => 'Ust. Fulan, S.Pd.',
             'director_title' => 'Mudir Pesantren',
@@ -138,6 +139,7 @@ class MasterDataTest extends TestCase
     {
         return [
             'name' => 'PONDOK PESANTREN CONTOH',
+            'token' => $this->user->institution->token,
             'city' => 'KOTA CONTOH',
             'director_name' => 'Ust. Fulan, S.Pd.',
             'director_title' => 'Mudir Pesantren',

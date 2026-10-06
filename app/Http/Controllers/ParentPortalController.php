@@ -57,13 +57,7 @@ class ParentPortalController extends Controller
         $student = $report->student;
 
         $record = $report->record ?? new ReportRecord;
-        $institution = Institution::first() ?? new Institution([
-            'name' => 'PONDOK PESANTREN CONTOH',
-            'city' => 'KOTA CONTOH',
-            'director_name' => 'Ust. Fulan, S.Pd.',
-            'director_title' => 'Direktur Pesantren',
-            'accent_color' => '#059669',
-        ]);
+        $institution = Institution::current();
 
         $pdf = Pdf::loadView('reports.monthly_pdf', [
             'report' => $report,

@@ -2,9 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\ImpersonationController;
 use App\Services\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class TenantMiddleware
@@ -20,9 +22,20 @@ class TenantMiddleware
         }
 
         // 2. If user is logged in, ensure tenant context is synced
-        if ($request->user()) {
-            if ($request->user()->institution_id) {
-                TenantContext::setTenant($request->user()->institution);
+        if ($user = $request->user()) {
+            $institution = $user->institution;
+
+            // A deactivated institution locks out its users; Super Admin support sessions stay open.
+            if ($institution && ! $institution->is_active && ! $request->session()->has(ImpersonationController::IMPERSONATOR_KEY)) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->withErrors(['username' => 'Lembaga Anda sedang dinonaktifkan. Hubungi pengelola platform.']);
+            }
+
+            if ($institution) {
+                TenantContext::setTenant($institution);
             }
 
             return $next($request);

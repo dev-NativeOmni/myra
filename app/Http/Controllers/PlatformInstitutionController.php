@@ -15,9 +15,10 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
- * Platform overview for the single Super Admin: monitors every institution and
- * manages institution records, but never edits an institution's own data. Support
- * inside an institution goes through ImpersonationController.
+ * Platform overview for the single Super Admin: monitors every institution,
+ * registers new ones (with their first Admin) and can deactivate them. Everything
+ * about an institution itself (profile, branding, token, data) is managed by its
+ * own Admin; support inside an institution goes through ImpersonationController.
  */
 class PlatformInstitutionController extends Controller
 {
@@ -46,11 +47,8 @@ class PlatformInstitutionController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'token' => 'nullable|string|max:50|unique:institutions,token',
+            'token' => 'nullable|string|max:50|alpha_dash|unique:institutions,token',
             'city' => 'required|string|max:100',
-            'director_name' => 'required|string|max:255',
-            'director_title' => 'required|string|max:100',
-            'accent_color' => 'nullable|string|max:20',
             'admin_name' => 'required|string|max:255',
             'admin_username' => ['required', 'string', 'max:100', 'alpha_dash', Rule::unique('users', 'username')],
             'admin_password' => 'required|string|min:8',
@@ -61,9 +59,9 @@ class PlatformInstitutionController extends Controller
                 'name' => $validated['name'],
                 'token' => $validated['token'] ? strtoupper(trim($validated['token'])) : $this->generateToken($validated['name']),
                 'city' => $validated['city'],
-                'director_name' => $validated['director_name'],
-                'director_title' => $validated['director_title'],
-                'accent_color' => $validated['accent_color'] ?: '#059669',
+                // Completed by the institution's own Admin in Profil Lembaga.
+                'director_name' => 'Belum diatur',
+                'director_title' => 'Pimpinan Lembaga',
                 'is_active' => true,
             ]);
 
@@ -88,24 +86,6 @@ class PlatformInstitutionController extends Controller
 
         return redirect()->route('platform.institutions.index')
             ->with('success', "Lembaga '{$institution->name}' (token {$institution->token}) dibuat dengan admin @{$validated['admin_username']}.");
-    }
-
-    public function update(Request $request, Institution $institution): RedirectResponse
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'token' => ['required', 'string', 'max:50', Rule::unique('institutions', 'token')->ignore($institution->id)],
-            'city' => 'required|string|max:100',
-            'director_name' => 'required|string|max:255',
-            'director_title' => 'required|string|max:100',
-            'accent_color' => 'required|string|max:20',
-        ]);
-
-        $validated['token'] = strtoupper(trim($validated['token']));
-        $institution->update($validated);
-
-        return redirect()->route('platform.institutions.index')
-            ->with('success', "Data lembaga '{$institution->name}' berhasil diperbarui.");
     }
 
     public function toggle(Institution $institution): RedirectResponse

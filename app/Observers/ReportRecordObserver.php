@@ -15,6 +15,7 @@ class ReportRecordObserver
         $report = $record->monthlyReport()->with('student')->first();
 
         $context = [
+            'institution_id' => $report?->institution_id,
             'user_id' => auth()->id(),
             'monthly_report_id' => $report?->id,
             'student_name' => $report?->student?->name,
