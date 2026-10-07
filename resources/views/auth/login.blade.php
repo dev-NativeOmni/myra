@@ -11,10 +11,16 @@
     <div class="w-full max-w-md space-y-6">
         <!-- Logo & Header -->
         <div class="text-center">
-            <div class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl mb-4"
-                 style="background-color: {{ $tenant?->accent_color ?: '#059669' }}; box-shadow: 0 10px 25px -5px {{ ($tenant?->accent_color ?: '#059669') }}66;">
-                {{ substr($tenant?->name ?? 'Myra', 0, 1) }}
-            </div>
+            @if($tenant?->logo_path && $tenant->imageUrl('logo_path'))
+                <div class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center bg-white shadow-xl mb-4 p-2 border border-slate-700/50">
+                    <img src="{{ $tenant->imageUrl('logo_path') }}" alt="{{ $tenant->name }}" class="max-h-full max-w-full object-contain">
+                </div>
+            @else
+                <div class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl mb-4"
+                     style="background-color: {{ $tenant?->accent_color ?: '#059669' }}; box-shadow: 0 10px 25px -5px {{ ($tenant?->accent_color ?: '#059669') }}66;">
+                    {{ substr($tenant?->name ?? 'Myra', 0, 1) }}
+                </div>
+            @endif
             <h1 class="text-2xl font-bold text-white tracking-tight">{{ $tenant?->name ?? 'Myra Reporting System' }}</h1>
             <p class="text-xs text-slate-400 mt-1">Platform Laporan Bulanan Santri & Evaluasi Berkala</p>
 

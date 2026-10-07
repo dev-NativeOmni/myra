@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Classroom;
+use App\Models\Institution;
 use App\Models\MonthlyReport;
 use App\Models\User;
 use Database\Seeders\SampleDataSeeder;
@@ -72,5 +73,58 @@ class LayoutNavigationTest extends TestCase
         $response = $this->actingAs($guru)->get(route('modules.tahfidz'));
 
         $response->assertDontSee('href="'.route('dashboard').'"', false);
+    }
+
+    public function test_dashboard_welcome_card_displays_institution_name(): void
+    {
+        $this->seed(SampleDataSeeder::class);
+        $admin = User::where('role', User::ROLE_ADMIN)->first();
+        $institution = $admin->institution;
+
+        $response = $this->actingAs($admin)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('Selamat Datang di '.$institution->name);
+    }
+
+    public function test_layout_sidebar_and_dashboard_display_institution_logo_when_uploaded(): void
+    {
+        $this->seed(SampleDataSeeder::class);
+        $admin = User::where('role', User::ROLE_ADMIN)->first();
+        $institution = $admin->institution;
+        $institution->update(['logo_path' => 'institutions/test-logo.jpg']);
+
+        $response = $this->actingAs($admin)->get(route('dashboard'));
+
+        $response->assertOk();
+        $response->assertSee($institution->imageUrl('logo_path'));
+        $response->assertSee('alt="'.$institution->name.'"', false);
+    }
+
+    public function test_multiple_roles_see_institution_logo_in_layout(): void
+    {
+        $this->seed(SampleDataSeeder::class);
+        $institution = Institution::where('token', 'MYRA-DEMO')->first();
+        $institution->update(['logo_path' => 'institutions/test-logo.jpg']);
+
+        $roles = [
+            User::ROLE_ADMIN => route('dashboard'),
+            User::ROLE_GURU => route('modules.tahfidz'),
+            User::ROLE_WALI_KELAS => route('modules.akademik'),
+            User::ROLE_KESANTRIAN => route('modules.kesantrian'),
+            User::ROLE_TU => route('modules.administrasi'),
+            User::ROLE_WALI_MURID => route('parent.dashboard'),
+        ];
+
+        foreach ($roles as $role => $url) {
+            $user = User::where('role', $role)->first();
+            if (! $user) {
+                continue;
+            }
+
+            $response = $this->actingAs($user)->get($url);
+            $response->assertOk();
+            $response->assertSee($institution->imageUrl('logo_path'));
+        }
     }
 }

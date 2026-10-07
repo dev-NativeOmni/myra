@@ -3,16 +3,21 @@
 @section('content')
 <div class="space-y-8">
     <!-- Hero / Welcome Banner -->
-    <div class="p-6 rounded-2xl bg-linear-to-r from-emerald-800 to-teal-900 text-white shadow-lg relative overflow-hidden">
+    <div class="p-6 rounded-2xl bg-linear-to-r from-emerald-800 to-teal-900 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="relative z-10">
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-700/60 text-emerald-200 border border-emerald-500/30 mb-3">
                 {{ $institution->name ?? 'Pondok Pesantren Contoh' }} &bull; {{ $institution->city ?? 'Kota Contoh' }}
             </span>
-            <h2 class="text-2xl font-bold">Selamat Datang di Portal Myra</h2>
+            <h2 class="text-2xl font-bold">Selamat Datang di {{ $institution->name ?? 'Portal Myra' }}</h2>
             <p class="text-emerald-100/80 text-sm mt-1 max-w-2xl">
                 Sistem Laporan Bulanan Santri modular & white-label dengan output PDF A4 presisi satu halaman standar siap cetak.
             </p>
         </div>
+        @if($institution->logo_path && $institution->imageUrl('logo_path'))
+            <div class="relative z-10 shrink-0 hidden sm:flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white/10 backdrop-blur-md rounded-2xl p-2.5 border border-white/20 shadow-inner">
+                <img src="{{ $institution->imageUrl('logo_path') }}" alt="{{ $institution->name }}" class="max-h-full max-w-full object-contain drop-shadow-sm">
+            </div>
+        @endif
     </div>
 
     <!-- Quick Stats Cards -->
