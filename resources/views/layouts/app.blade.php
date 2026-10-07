@@ -328,6 +328,15 @@
                                 <path stroke-linecap="round" stroke-width="2" d="M9 4v16"/>
                             </svg>
                         </button>
+                        @if($tenant?->logo_path && $tenant->imageUrl('logo_path'))
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-slate-200 shadow-xs p-1 shrink-0 overflow-hidden">
+                                <img src="{{ $tenant->imageUrl('logo_path') }}" alt="{{ $tenant->name }}" class="max-h-full max-w-full object-contain">
+                            </div>
+                        @elseif($platformLogo)
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-slate-200 shadow-xs p-1 shrink-0 overflow-hidden">
+                                <img src="{{ $platformLogo }}" alt="Myra" class="max-h-full max-w-full object-contain">
+                            </div>
+                        @endif
                         <div class="min-w-0">
                             <h1 class="text-lg sm:text-xl font-bold text-slate-900 truncate">{{ $header ?? 'Dashboard' }}</h1>
                             @if(isset($subheader))
@@ -337,6 +346,12 @@
                     </div>
 
                     <div class="flex items-center gap-3 shrink-0">
+                        @if($tenant && ! $isSuperAdmin)
+                            <div class="hidden sm:flex items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-slate-100/80 border border-slate-200/80 text-xs font-semibold text-slate-700">
+                                <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $tenant->accent_color ?: '#059669' }}"></span>
+                                <span class="truncate max-w-[160px]">{{ $tenant->name }}</span>
+                            </div>
+                        @endif
                         @if($sampleReportId)
                             <a href="{{ route('reports.preview', $sampleReportId) }}" target="_blank" title="Pratinjau PDF Sampel" aria-label="Pratinjau PDF Sampel" class="inline-flex items-center gap-2 p-2 sm:px-3.5 sm:py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200/80 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -85,9 +85,15 @@
             @forelse($institutions as $inst)
                 <article class="min-w-0 bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5 space-y-4 {{ $inst->is_active ? '' : 'opacity-75' }}">
                     <header class="flex items-start gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shrink-0" style="background-color: {{ $inst->accent_color ?: '#059669' }};">
-                            {{ mb_substr($inst->name, 0, 1) }}
-                        </div>
+                        @if($inst->logo_path && $inst->imageUrl('logo_path'))
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-slate-200 shadow-xs p-1 shrink-0 overflow-hidden">
+                                <img src="{{ $inst->imageUrl('logo_path') }}" alt="{{ $inst->name }}" class="max-h-full max-w-full object-contain">
+                            </div>
+                        @else
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shrink-0" style="background-color: {{ $inst->accent_color ?: '#059669' }};">
+                                {{ mb_substr($inst->name, 0, 1) }}
+                            </div>
+                        @endif
                         <div class="min-w-0 flex-1">
                             <h3 class="font-bold text-slate-900 leading-snug">{{ $inst->name }}</h3>
                             <div class="flex flex-wrap items-center gap-1.5 mt-1 text-[11px]">

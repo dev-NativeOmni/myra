@@ -74,4 +74,20 @@ class PlatformLogoTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_superadmin_view_and_top_navbar_render_institution_logo(): void
+    {
+        $institution = $this->institutionAdmin->institution;
+        $institution->update(['logo_path' => 'institutions/sample-logo.png']);
+
+        // 1. Super Admin view displays the institution logo in the card
+        $platformResponse = $this->actingAs($this->superAdmin)->get(route('platform.institutions.index'));
+        $platformResponse->assertOk();
+        $platformResponse->assertSee($institution->imageUrl('logo_path'));
+
+        // 2. Institution Admin header navbar displays the institution logo
+        $adminResponse = $this->actingAs($this->institutionAdmin)->get(route('dashboard'));
+        $adminResponse->assertOk();
+        $adminResponse->assertSee($institution->imageUrl('logo_path'));
+    }
 }
