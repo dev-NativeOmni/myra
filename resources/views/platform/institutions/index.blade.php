@@ -28,6 +28,48 @@
         @endforeach
     </div>
 
+    <!-- Platform Branding / Logo Management -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 sm:p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-3.5">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-slate-900 border border-slate-800 shadow-md p-2 shrink-0 overflow-hidden">
+                    @if($platformLogoUrl)
+                        <img src="{{ $platformLogoUrl }}" alt="Logo Myra Platform" class="max-h-full max-w-full object-contain">
+                    @else
+                        <span class="font-extrabold text-white text-2xl">M</span>
+                    @endif
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900">Logo &amp; Branding Umum Myra</h2>
+                    <p class="text-xs text-slate-500 mt-0.5 max-w-xl">
+                        Logo ini ditampilkan di Gerbang Token (Gateway), halaman Login umum, dan panel platform Super Admin (serta fallback jika lembaga belum mengunggah logo sendiri).
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <form action="{{ route('platform.settings.logo') }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                    @csrf
+                    <label class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer inline-flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        <span>{{ $platformLogoUrl ? 'Ganti Logo' : 'Unggah Logo' }}</span>
+                        <input type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" onchange="this.form.submit()">
+                    </label>
+                </form>
+
+                @if($platformLogoUrl)
+                    <form action="{{ route('platform.settings.logo.delete') }}" method="POST" onsubmit="return confirm('Hapus logo kustom Myra dan kembali ke default?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-3 py-2 bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer">
+                            Hapus Logo
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+    </section>
+
     <!-- Institutions -->
     <section class="space-y-3">
         <div class="flex items-center justify-between gap-3">

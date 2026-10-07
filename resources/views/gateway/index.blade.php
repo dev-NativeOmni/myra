@@ -11,10 +11,15 @@
     <div class="w-full max-w-md space-y-6">
         <!-- Logo & Header (Logo can be clicked to toggle Super Admin login) -->
         <div class="text-center">
+            @php $platformLogo = \App\Models\Setting::platformLogoUrl(); @endphp
             <button type="button" @click="mode = (mode === 'token' ? 'admin' : 'token')"
                     title="Akses Platform"
-                    class="w-14 h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl shadow-emerald-500/25 mb-4 transition cursor-pointer select-none">
-                M
+                    class="w-14 h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl shadow-emerald-500/25 mb-4 transition cursor-pointer select-none overflow-hidden p-1.5">
+                @if($platformLogo)
+                    <img src="{{ $platformLogo }}" alt="Myra Logo" class="max-h-full max-w-full object-contain">
+                @else
+                    M
+                @endif
             </button>
             <h1 class="text-2xl font-bold text-white tracking-tight">Myra Multi-Tenant</h1>
             <p class="text-xs text-slate-400 mt-1" x-show="mode === 'token'">Sistem Pelaporan & Evaluasi Santri Berbasis Lembaga Mandiri</p>

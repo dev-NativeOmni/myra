@@ -11,9 +11,14 @@
     <div class="w-full max-w-md space-y-6">
         <!-- Logo & Header -->
         <div class="text-center">
+            @php $platformLogo = \App\Models\Setting::platformLogoUrl(); @endphp
             @if($tenant?->logo_path && $tenant->imageUrl('logo_path'))
                 <div class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center bg-white shadow-xl mb-4 p-2 border border-slate-700/50">
                     <img src="{{ $tenant->imageUrl('logo_path') }}" alt="{{ $tenant->name }}" class="max-h-full max-w-full object-contain">
+                </div>
+            @elseif($platformLogo)
+                <div class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center bg-white shadow-xl mb-4 p-2 border border-slate-700/50">
+                    <img src="{{ $platformLogo }}" alt="Myra" class="max-h-full max-w-full object-contain">
                 </div>
             @else
                 <div class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl mb-4"

@@ -6,6 +6,7 @@ use App\Services\TenantContext;
 use App\Traits\BelongsToInstitution;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class Setting extends Model
 {
@@ -31,6 +32,62 @@ class Setting extends Model
         self::$holidaysCache = [];
 
         return $setting;
+    }
+
+    public static function getGlobal(string $key, mixed $default = null): mixed
+    {
+        return Cache::rememberForever('setting:global:'.$key, function () use ($key, $default) {
+            $setting = self::withoutGlobalScope('institution')
+                ->whereNull('institution_id')
+                ->where('key', $key)
+                ->first();
+
+            return $setting ? $setting->value : $default;
+        });
+    }
+
+    public static function setGlobal(string $key, ?string $value): ?self
+    {
+        Cache::forget('setting:global:'.$key);
+
+        if ($value === null) {
+            self::withoutGlobalScope('institution')
+                ->whereNull('institution_id')
+                ->where('key', $key)
+                ->delete();
+
+            return null;
+        }
+
+        $setting = self::withoutGlobalScope('institution')
+            ->whereNull('institution_id')
+            ->where('key', $key)
+            ->first();
+
+        if ($setting) {
+            $setting->update(['value' => $value]);
+        } else {
+            $setting = new self;
+            $setting->institution_id = null;
+            $setting->key = $key;
+            $setting->value = $value;
+            $setting->saveQuietly();
+        }
+
+        return $setting;
+    }
+
+    /**
+     * Get the public URL of the custom general platform Myra logo, or null if none is set.
+     */
+    public static function platformLogoUrl(): ?string
+    {
+        $path = self::getGlobal('platform_logo_path');
+        if (! $path) {
+            return null;
+        }
+
+        return Storage::disk(config('filesystems.uploads'))->url($path);
     }
 
     /**

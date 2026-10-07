@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\ImpersonationLog;
 use App\Models\Institution;
 use App\Models\ModuleField;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -36,7 +38,48 @@ class PlatformInstitutionController extends Controller
             ->take(10)
             ->get();
 
-        return view('platform.institutions.index', compact('institutions', 'supportSessions'));
+        $platformLogoUrl = Setting::platformLogoUrl();
+
+        return view('platform.institutions.index', compact('institutions', 'supportSessions', 'platformLogoUrl'));
+    }
+
+    /**
+     * Update the generic Myra platform logo.
+     */
+    public function updateLogo(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'logo' => 'required|image|mimes:png,jpg,jpeg,webp,svg|max:2048',
+        ]);
+
+        $disk = Storage::disk(config('filesystems.uploads'));
+        $oldPath = Setting::getGlobal('platform_logo_path');
+        if ($oldPath && $disk->exists($oldPath)) {
+            $disk->delete($oldPath);
+        }
+
+        $path = $request->file('logo')->store('platform', config('filesystems.uploads'));
+        Setting::setGlobal('platform_logo_path', $path);
+
+        return redirect()->route('platform.institutions.index')
+            ->with('success', 'Logo umum platform Myra berhasil diperbarui.');
+    }
+
+    /**
+     * Remove the custom platform logo and reset to default.
+     */
+    public function deleteLogo(): RedirectResponse
+    {
+        $disk = Storage::disk(config('filesystems.uploads'));
+        $oldPath = Setting::getGlobal('platform_logo_path');
+        if ($oldPath && $disk->exists($oldPath)) {
+            $disk->delete($oldPath);
+        }
+
+        Setting::setGlobal('platform_logo_path', null);
+
+        return redirect()->route('platform.institutions.index')
+            ->with('success', 'Logo umum platform Myra berhasil dihapus (kembali ke default).');
     }
 
     /**

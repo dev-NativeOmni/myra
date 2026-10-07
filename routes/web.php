@@ -46,6 +46,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/institutions', [PlatformInstitutionController::class, 'store'])->name('institutions.store');
         Route::post('/institutions/{institution}/toggle', [PlatformInstitutionController::class, 'toggle'])->name('institutions.toggle');
         Route::post('/institutions/{institution}/impersonate/{user}', [ImpersonationController::class, 'start'])->name('institutions.impersonate');
+        Route::post('/settings/logo', [PlatformInstitutionController::class, 'updateLogo'])->name('settings.logo');
+        Route::delete('/settings/logo', [PlatformInstitutionController::class, 'deleteLogo'])->name('settings.logo.delete');
     });
 
     // Institution Admin: Profil Lembaga, Master Data, User Management, Siklus Laporan, Batch Export, Calendar & Schedules

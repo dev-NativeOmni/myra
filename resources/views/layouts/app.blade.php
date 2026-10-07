@@ -150,9 +150,14 @@
                 <!-- Brand Header -->
                 <div class="px-6 py-5 border-b border-slate-800 flex items-center justify-between">
                     <a href="{{ $user ? route($user->homeRouteName()) : url('/') }}" class="flex items-center gap-3 min-w-0 flex-1">
+                        @php $platformLogo = \App\Models\Setting::platformLogoUrl(); @endphp
                         @if($tenant?->logo_path && $tenant->imageUrl('logo_path'))
                             <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-lg p-1 shrink-0 overflow-hidden">
                                 <img src="{{ $tenant->imageUrl('logo_path') }}" alt="{{ $tenant->name }}" class="max-h-full max-w-full object-contain">
+                            </div>
+                        @elseif($platformLogo)
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-white shadow-lg p-1 shrink-0 overflow-hidden">
+                                <img src="{{ $platformLogo }}" alt="Myra" class="max-h-full max-w-full object-contain">
                             </div>
                         @else
                             <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-lg text-lg shrink-0"
@@ -162,7 +167,7 @@
                         @endif
                         <div class="min-w-0">
                             <span class="text-base font-bold tracking-tight text-white block truncate">{{ $tenant?->name ?? 'Myra' }}</span>
-                            <span class="text-[10px] text-emerald-400 font-mono uppercase tracking-wider block truncate">Token: {{ $tenant?->token ?? 'MULTI-TENANT' }}</span>
+                            <span class="text-[10px] text-emerald-400 font-mono uppercase tracking-wider block truncate">Token: {{ $tenant?->token ?? ($isSuperAdmin ? 'SUPER ADMIN' : 'MULTI-TENANT') }}</span>
                         </div>
                     </a>
                     <button type="button" @click="toggle()"
