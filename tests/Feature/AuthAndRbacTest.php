@@ -172,4 +172,20 @@ class AuthAndRbacTest extends TestCase
         $storeResponse->assertRedirect(route('users.index'));
         $this->assertDatabaseHas('users', ['username' => 'gurubaru']);
     }
+
+    public function test_logout_returns_to_institution_login_form(): void
+    {
+        $admin = User::where('role', User::ROLE_ADMIN)->firstOrFail();
+        $institution = $admin->institution;
+
+        $response = $this->actingAs($admin)->post(route('logout'));
+
+        $response->assertRedirect(route('login'));
+        $this->assertGuest();
+
+        $loginResponse = $this->get(route('login'));
+        $loginResponse->assertOk();
+        $loginResponse->assertSee($institution->name);
+        $loginResponse->assertSee($institution->token);
+    }
 }

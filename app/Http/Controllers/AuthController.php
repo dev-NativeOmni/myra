@@ -102,6 +102,8 @@ class AuthController extends Controller
      */
     public function logout(Request $request): RedirectResponse
     {
+        $institution = $request->user()?->institution;
+
         // Logging out in the middle of a support session still closes its log entry.
         if ($logId = $request->session()->get(ImpersonationController::LOG_KEY)) {
             ImpersonationLog::whereKey($logId)->whereNull('ended_at')->update(['ended_at' => now()]);
@@ -111,6 +113,10 @@ class AuthController extends Controller
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if ($institution) {
+            TenantContext::setTenant($institution);
+        }
 
         return redirect()->route('login')->with('success', 'Anda telah berhasil keluar dari sistem.');
     }
