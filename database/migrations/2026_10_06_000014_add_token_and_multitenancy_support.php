@@ -26,14 +26,14 @@ return new class extends Migration
         $firstInstitution = DB::table('institutions')->first();
         if ($firstInstitution) {
             DB::table('institutions')->where('id', $firstInstitution->id)->update([
-                'token' => $firstInstitution->token ?: 'TAQREER-DEMO',
+                'token' => $firstInstitution->token ?: 'MYRA-DEMO',
                 'is_active' => true,
             ]);
             $defaultInstitutionId = $firstInstitution->id;
         } else {
             $defaultInstitutionId = DB::table('institutions')->insertGetId([
                 'name' => 'PONDOK PESANTREN CONTOH',
-                'token' => 'TAQREER-DEMO',
+                'token' => 'MYRA-DEMO',
                 'is_active' => true,
                 'city' => 'KOTA CONTOH',
                 'director_name' => 'Ust. Fulan, S.Pd.',

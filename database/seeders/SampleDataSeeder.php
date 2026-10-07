@@ -22,7 +22,7 @@ class SampleDataSeeder extends Seeder
     {
         // 1. Institution Profile (Default Primary Tenant)
         $institution = Institution::firstOrCreate(
-            ['token' => 'TAQREER-DEMO'],
+            ['token' => 'MYRA-DEMO'],
             [
                 'name' => 'PONDOK PESANTREN CONTOH',
                 'sub_title' => 'Islamic Boarding School',
@@ -81,42 +81,42 @@ class SampleDataSeeder extends Seeder
             [
                 'name' => 'Ust. Fulan (Super Admin)',
                 'username' => 'superadmin',
-                'email' => 'superadmin@taqreer.id',
+                'email' => 'superadmin@myra.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_SUPER_ADMIN,
             ],
             [
                 'name' => 'Ustadzah Fatimah (Admin Operasional)',
                 'username' => 'admin',
-                'email' => 'admin@taqreer.id',
+                'email' => 'admin@myra.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_ADMIN,
             ],
             [
                 'name' => 'Ustadz Abdullah (Guru Tahfidz)',
                 'username' => 'guru',
-                'email' => 'guru@taqreer.id',
+                'email' => 'guru@myra.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_GURU,
             ],
             [
                 'name' => 'Ustadz Ibrahim (Wali Kelas)',
                 'username' => 'walikelas',
-                'email' => 'walikelas@taqreer.id',
+                'email' => 'walikelas@myra.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_WALI_KELAS,
             ],
             [
                 'name' => 'Ustadz Yusuf (Wali Asrama / Kesantrian)',
                 'username' => 'kesantrian',
-                'email' => 'kesantrian@taqreer.id',
+                'email' => 'kesantrian@myra.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_KESANTRIAN,
             ],
             [
                 'name' => 'Ustadzah Maryam (Staf TU & Keuangan)',
                 'username' => 'tu',
-                'email' => 'tu@taqreer.id',
+                'email' => 'tu@myra.id',
                 'password' => Hash::make('password'),
                 'role' => User::ROLE_TU,
             ],
@@ -225,7 +225,7 @@ class SampleDataSeeder extends Seeder
             foreach ($studentsList as $indexInClass => $data) {
                 $nis = sprintf('%02d%02d', $classNumber, $indexInClass + 1);
                 $parentUsername = 'walimurid'.$globalStudentIndex;
-                $parentEmail = 'walimurid'.$globalStudentIndex.'@taqreer.id';
+                $parentEmail = 'walimurid'.$globalStudentIndex.'@myra.id';
 
                 // A. Create Student
                 $student = Student::updateOrCreate(
@@ -296,7 +296,7 @@ class SampleDataSeeder extends Seeder
                         [
                             'name' => $data['parent'].' (Demo)',
                             'username' => 'walimurid',
-                            'email' => 'walimurid@taqreer.id',
+                            'email' => 'walimurid@myra.id',
                             'password' => Hash::make('password'),
                             'role' => User::ROLE_WALI_MURID,
                         ]

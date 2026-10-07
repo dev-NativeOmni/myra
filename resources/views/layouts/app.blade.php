@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Taqreer - Sistem Laporan Bulanan Santri' }}</title>
+    <title>{{ $title ?? 'Myra - Sistem Laporan Bulanan Santri' }}</title>
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script>
         try {
-            if (localStorage.getItem('taqreer.sidebar.pinned') === '0') {
+            if (localStorage.getItem('myra.sidebar.pinned') === '0') {
                 document.documentElement.classList.add('sidebar-unpinned');
             }
         } catch (e) {}
@@ -27,7 +27,7 @@
                     this.$watch('pinned', (value) => {
                         document.documentElement.classList.toggle('sidebar-unpinned', !value);
                         try {
-                            localStorage.setItem('taqreer.sidebar.pinned', value ? '1' : '0');
+                            localStorage.setItem('myra.sidebar.pinned', value ? '1' : '0');
                         } catch (e) {}
                         this.peeking = false;
                     });
@@ -152,10 +152,10 @@
                     <a href="{{ $user ? route($user->homeRouteName()) : url('/') }}" class="flex items-center gap-3 min-w-0 flex-1">
                         <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-lg text-lg shrink-0"
                              style="background-color: {{ $tenant?->accent_color ?: '#059669' }}; box-shadow: 0 10px 15px -3px {{ ($tenant?->accent_color ?: '#059669') }}55;">
-                            {{ substr($tenant?->name ?? 'T', 0, 1) }}
+                            {{ substr($tenant?->name ?? 'M', 0, 1) }}
                         </div>
                         <div class="min-w-0">
-                            <span class="text-base font-bold tracking-tight text-white block truncate">{{ $tenant?->name ?? 'Taqreer' }}</span>
+                            <span class="text-base font-bold tracking-tight text-white block truncate">{{ $tenant?->name ?? 'Myra' }}</span>
                             <span class="text-[10px] text-emerald-400 font-mono uppercase tracking-wider block truncate">Token: {{ $tenant?->token ?? 'MULTI-TENANT' }}</span>
                         </div>
                     </a>

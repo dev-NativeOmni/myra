@@ -32,7 +32,7 @@ class ModuleSettingTest extends TestCase
 
         $this->admin = User::where('role', User::ROLE_ADMIN)->first() ?? User::create([
             'name' => 'Admin Staff',
-            'email' => 'admin_test@taqreer.test',
+            'email' => 'admin_test@myra.test',
             'password' => bcrypt('password'),
             'role' => User::ROLE_ADMIN,
         ]);

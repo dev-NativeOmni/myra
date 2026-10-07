@@ -42,8 +42,8 @@ class MultiTenantGatewayTest extends TestCase
     {
         $response = $this->get(route('gateway.index'));
         $response->assertOk();
-        $response->assertSee('Taqreer Multi-Tenant');
-        $response->assertSee('TAQREER-DEMO');
+        $response->assertSee('Myra Multi-Tenant');
+        $response->assertSee('MYRA-DEMO');
     }
 
     public function test_invalid_token_returns_error(): void
@@ -59,7 +59,7 @@ class MultiTenantGatewayTest extends TestCase
     public function test_valid_token_sets_tenant_session_and_redirects_to_login(): void
     {
         $response = $this->post(route('gateway.verify'), [
-            'token' => 'taqreer-demo', // test case insensitivity
+            'token' => 'myra-demo', // test case insensitivity
         ]);
 
         $response->assertRedirect(route('login'));
@@ -69,7 +69,7 @@ class MultiTenantGatewayTest extends TestCase
 
     public function test_direct_portal_link_sets_tenant_session(): void
     {
-        $response = $this->get(route('gateway.direct', 'TAQREER-DEMO'));
+        $response = $this->get(route('gateway.direct', 'MYRA-DEMO'));
 
         $response->assertRedirect(route('login'));
         $response->assertSessionHas('active_institution_id');
@@ -78,7 +78,7 @@ class MultiTenantGatewayTest extends TestCase
     public function test_user_can_login_under_active_tenant(): void
     {
         // 1. Set tenant
-        $this->post(route('gateway.verify'), ['token' => 'TAQREER-DEMO']);
+        $this->post(route('gateway.verify'), ['token' => 'MYRA-DEMO']);
 
         // 2. Login as superadmin
         $response = $this->post(route('login.post'), [
@@ -93,7 +93,7 @@ class MultiTenantGatewayTest extends TestCase
     public function test_tenant_data_isolation_between_institutions(): void
     {
         // Institution A (from seeder)
-        $instA = Institution::where('token', 'TAQREER-DEMO')->first();
+        $instA = Institution::where('token', 'MYRA-DEMO')->first();
 
         // Institution B (from seeder)
         $instB = Institution::where('token', 'ALHIKMAH-DEMO')->first();

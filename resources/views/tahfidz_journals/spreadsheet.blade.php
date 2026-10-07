@@ -118,7 +118,7 @@
                 });
             },
 
-            draftKey: 'taqreer_draft_tahfidz_{{ $selectedClassroomId }}_{{ $selectedMonth }}',
+            draftKey: 'myra_draft_tahfidz_{{ $selectedClassroomId }}_{{ $selectedMonth }}',
             hasDraftAvailable: false,
             draftTimestamp: '',
             saveDraftTimer: null,

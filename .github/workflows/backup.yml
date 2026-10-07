@@ -44,7 +44,7 @@ jobs:
         env:
           BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
-          name="taqreer-backup-$(TZ=Asia/Jakarta date +%Y%m%d-%H%M)"
+          name="myra-backup-$(TZ=Asia/Jakarta date +%Y%m%d-%H%M)"
           tar -czf "$name.tar.gz" -C backup .
           gpg --batch --yes --symmetric --cipher-algo AES256 \
             --passphrase-fd 0 --output "$name.tar.gz.gpg" "$name.tar.gz" <<< "$BACKUP_PASSPHRASE"

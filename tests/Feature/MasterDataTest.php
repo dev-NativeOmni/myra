@@ -31,7 +31,7 @@ class MasterDataTest extends TestCase
         $latestReport = MonthlyReport::latest()->first();
         $response = $this->actingAs($this->user)->get(route('dashboard'));
         $response->assertStatus(200);
-        $response->assertSee('Taqreer');
+        $response->assertSee('Myra');
         if ($latestReport && $latestReport->student) {
             $response->assertSee($latestReport->student->name);
         }

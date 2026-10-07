@@ -9,7 +9,7 @@
  * always take precedence over the defaults below.
  */
 $serverlessDefaults = [
-    'APP_NAME' => 'Taqreer',
+    'APP_NAME' => 'Myra',
     'APP_ENV' => 'production',
     'APP_DEBUG' => 'false',
     'APP_LOCALE' => 'id',

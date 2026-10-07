@@ -8,7 +8,7 @@
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-700/60 text-emerald-200 border border-emerald-500/30 mb-3">
                 {{ $institution->name ?? 'Pondok Pesantren Contoh' }} &bull; {{ $institution->city ?? 'Kota Contoh' }}
             </span>
-            <h2 class="text-2xl font-bold">Selamat Datang di Portal Taqreer</h2>
+            <h2 class="text-2xl font-bold">Selamat Datang di Portal Myra</h2>
             <p class="text-emerald-100/80 text-sm mt-1 max-w-2xl">
                 Sistem Laporan Bulanan Santri modular & white-label dengan output PDF A4 presisi satu halaman standar siap cetak.
             </p>

@@ -165,7 +165,7 @@ class AuthAndRbacTest extends TestCase
         $storeResponse = $this->actingAs($admin)->post(route('users.store'), [
             'name' => 'Guru Baru',
             'username' => 'gurubaru',
-            'email' => 'gurubaru@taqreer.id',
+            'email' => 'gurubaru@myra.id',
             'password' => 'password123',
             'role' => User::ROLE_GURU,
         ]);

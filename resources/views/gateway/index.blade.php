@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerbang Akses Lembaga - Taqreer Multi-Tenant</title>
+    <title>Gerbang Akses Lembaga - Myra Multi-Tenant</title>
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -14,9 +14,9 @@
             <button type="button" @click="mode = (mode === 'token' ? 'admin' : 'token')"
                     title="Akses Platform"
                     class="w-14 h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl shadow-emerald-500/25 mb-4 transition cursor-pointer select-none">
-                T
+                M
             </button>
-            <h1 class="text-2xl font-bold text-white tracking-tight">Taqreer Multi-Tenant</h1>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Myra Multi-Tenant</h1>
             <p class="text-xs text-slate-400 mt-1" x-show="mode === 'token'">Sistem Pelaporan & Evaluasi Santri Berbasis Lembaga Mandiri</p>
             <p class="text-xs text-emerald-400 mt-1 font-semibold" x-show="mode === 'admin'" x-cloak>Portal Khusus Super Admin Platform</p>
         </div>
@@ -61,7 +61,7 @@
                     <div class="relative">
                         <input type="text" name="token" id="token" value="{{ old('token') }}" required autofocus
                             class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 text-base font-mono font-bold uppercase tracking-wider text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition placeholder:normal-case placeholder:font-normal placeholder:text-sm placeholder:text-slate-400"
-                            placeholder="Contoh: TAQREER-DEMO"
+                            placeholder="Contoh: MYRA-DEMO"
                             style="text-transform: uppercase;">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,10 +78,10 @@
 
             <!-- Quick Demo Portal & Direct Login -->
             <div class="pt-4 border-t border-slate-100 space-y-2">
-                <a href="{{ route('gateway.direct', 'TAQREER-DEMO') }}" class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center justify-between transition border border-emerald-200">
+                <a href="{{ route('gateway.direct', 'MYRA-DEMO') }}" class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center justify-between transition border border-emerald-200">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span>Coba Lembaga Demo (TAQREER-DEMO)</span>
+                        <span>Coba Lembaga Demo (MYRA-DEMO)</span>
                     </div>
                     <span>&rarr;</span>
                 </a>
@@ -140,7 +140,7 @@
 
         <!-- Footer Info -->
         <div class="text-center text-xs text-slate-500">
-            Platform Taqreer Multi-Tenant &copy; {{ date('Y') }}. Hak Cipta Dilindungi.
+            Platform Myra Multi-Tenant &copy; {{ date('Y') }}. Hak Cipta Dilindungi.
         </div>
     </div>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk - {{ $tenant?->name ?? 'Taqreer Reporting System' }}</title>
+    <title>Masuk - {{ $tenant?->name ?? 'Myra Reporting System' }}</title>
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -13,9 +13,9 @@
         <div class="text-center">
             <div class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl mb-4"
                  style="background-color: {{ $tenant?->accent_color ?: '#059669' }}; box-shadow: 0 10px 25px -5px {{ ($tenant?->accent_color ?: '#059669') }}66;">
-                {{ substr($tenant?->name ?? 'Taqreer', 0, 1) }}
+                {{ substr($tenant?->name ?? 'Myra', 0, 1) }}
             </div>
-            <h1 class="text-2xl font-bold text-white tracking-tight">{{ $tenant?->name ?? 'Taqreer Reporting System' }}</h1>
+            <h1 class="text-2xl font-bold text-white tracking-tight">{{ $tenant?->name ?? 'Myra Reporting System' }}</h1>
             <p class="text-xs text-slate-400 mt-1">Platform Laporan Bulanan Santri & Evaluasi Berkala</p>
 
             @if($tenant)

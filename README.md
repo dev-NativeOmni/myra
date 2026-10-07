@@ -1,4 +1,4 @@
-# Taqreer
+# Myra
 
 Sistem laporan bulanan santri: jurnal tahfidz, input modul penilaian (tahfidz, kesantrian, akademik, administrasi), rapor PDF, portal wali murid, dan analitik perkembangan.
 
@@ -74,7 +74,7 @@ DB_CONNECTION=pgsql DB_URL="<session pooler URL>" DB_SSLMODE=require CACHE_STORE
 1. Unduh artifact dari halaman run **Daily Backup** di tab Actions.
 2. Dekripsi dan ekstrak:
    ```bash
-   gpg --decrypt taqreer-backup-YYYYMMDD-HHMM.tar.gz.gpg | tar -xz
+   gpg --decrypt myra-backup-YYYYMMDD-HHMM.tar.gz.gpg | tar -xz
    ```
 3. Pulihkan database (hati-hati: menimpa data yang ada):
    ```bash

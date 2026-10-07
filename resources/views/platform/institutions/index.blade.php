@@ -1,5 +1,5 @@
 @extends('layouts.app', [
-    'header' => 'Platform Taqreer',
+    'header' => 'Platform Myra',
     'subheader' => 'Pantau seluruh lembaga dan bantu admin lembaga bila ada kendala',
 ])
 
