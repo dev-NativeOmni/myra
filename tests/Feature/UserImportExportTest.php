@@ -186,6 +186,20 @@ class UserImportExportTest extends TestCase
         $this->assertSame(User::ROLE_ADMIN, $this->admin->fresh()->role);
     }
 
+    public function test_import_cannot_overwrite_another_admin(): void
+    {
+        $otherAdmin = User::factory()->create([
+            'institution_id' => $this->admin->institution_id,
+            'role' => User::ROLE_ADMIN,
+            'password' => Hash::make('sandiAsli123'),
+        ]);
+        $csv = self::HEADER."Diambil Alih,{$otherAdmin->username},,admin,,,diambilAlih123\n";
+
+        $this->importCsv($this->admin, $csv)->assertSessionHasErrors();
+
+        $this->assertTrue(Hash::check('sandiAsli123', $otherAdmin->fresh()->password));
+    }
+
     private function importCsv(User $importer, string $csv): TestResponse
     {
         $file = UploadedFile::fake()->createWithContent('pengguna.csv', $csv);

@@ -81,6 +81,10 @@ class UsersImport implements ToCollection, WithCustomValueBinder, WithHeadingRow
             return "Username @{$username} sudah dipakai akun lain di luar lembaga Anda. Gunakan username lain.";
         }
 
+        if ($user && ! $this->importer->canManage($user)) {
+            return "Akun @{$username} adalah Admin lain dan hanya dapat diubah oleh Super Admin.";
+        }
+
         if ($user?->is($this->importer) && $role !== $user->role) {
             return 'Peran akun Anda sendiri tidak dapat diubah lewat impor.';
         }

@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Models\User;
 use Database\Seeders\SampleDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -177,5 +178,64 @@ class UserManagementTest extends TestCase
 
         $response->assertSessionHasErrors('role');
         $this->assertDatabaseMissing('users', ['username' => 'calon_super']);
+    }
+
+    public function test_admin_can_change_username_and_password_of_a_lower_role(): void
+    {
+        $guru = User::where('role', User::ROLE_GURU)->firstOrFail();
+
+        $this->actingAs($this->admin)->put(route('users.update', $guru), [
+            'name' => $guru->name,
+            'username' => 'guru_baru',
+            'password' => 'sandiBaru123',
+            'role' => User::ROLE_GURU,
+        ])->assertRedirect(route('users.index'));
+
+        $guru->refresh();
+        $this->assertSame('guru_baru', $guru->username);
+        $this->assertTrue(Hash::check('sandiBaru123', $guru->password));
+    }
+
+    public function test_admin_cannot_update_or_delete_another_admin(): void
+    {
+        $otherAdmin = User::factory()->create([
+            'institution_id' => $this->admin->institution_id,
+            'role' => User::ROLE_ADMIN,
+            'password' => Hash::make('sandiAsli123'),
+        ]);
+
+        $this->actingAs($this->admin)->get(route('users.edit', $otherAdmin))->assertForbidden();
+        $this->actingAs($this->admin)->put(route('users.update', $otherAdmin), [
+            'name' => $otherAdmin->name,
+            'username' => $otherAdmin->username,
+            'password' => 'diambilAlih123',
+            'role' => User::ROLE_TU,
+        ])->assertForbidden();
+        $this->actingAs($this->admin)->delete(route('users.destroy', $otherAdmin))->assertForbidden();
+
+        $otherAdmin->refresh();
+        $this->assertSame(User::ROLE_ADMIN, $otherAdmin->role);
+        $this->assertTrue(Hash::check('sandiAsli123', $otherAdmin->password));
+    }
+
+    public function test_admin_can_change_own_password_but_not_own_role(): void
+    {
+        $this->actingAs($this->admin)->put(route('users.update', $this->admin), [
+            'name' => $this->admin->name,
+            'username' => $this->admin->username,
+            'password' => 'sandiSendiri123',
+            'role' => User::ROLE_GURU,
+        ])->assertSessionHasErrors('role');
+
+        $this->assertSame(User::ROLE_ADMIN, $this->admin->fresh()->role);
+
+        $this->actingAs($this->admin)->put(route('users.update', $this->admin), [
+            'name' => $this->admin->name,
+            'username' => $this->admin->username,
+            'password' => 'sandiSendiri123',
+            'role' => User::ROLE_ADMIN,
+        ])->assertRedirect(route('users.index'));
+
+        $this->assertTrue(Hash::check('sandiSendiri123', $this->admin->fresh()->password));
     }
 }

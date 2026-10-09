@@ -96,6 +96,20 @@ class UserController extends Controller
     }
 
     /**
+     * Admins may only manage accounts below them; other Admins are left to the Super Admin.
+     */
+    private function authorizeManage(User $currentUser, User $target): void
+    {
+        abort_unless(
+            $currentUser->canManage($target),
+            403,
+            $target->isSuperAdmin()
+                ? 'Hanya Super Admin yang dapat mengubah akun Super Admin.'
+                : 'Akun Admin lain hanya dapat diubah oleh Super Admin.',
+        );
+    }
+
+    /**
      * @return Builder<User>
      */
     private function filteredUsers(Request $request): Builder
@@ -181,11 +195,7 @@ class UserController extends Controller
         $students = Student::where('is_active', true)->with('classroom')->orderBy('name')->get();
         $classrooms = Classroom::orderBy('name')->get();
         $currentUser = Auth::user();
-
-        // Non-superadmin cannot edit superadmin
-        if ($user->isSuperAdmin() && ! $currentUser->isSuperAdmin()) {
-            abort(403, 'Hanya Super Admin yang dapat mengubah akun Super Admin.');
-        }
+        $this->authorizeManage($currentUser, $user);
 
         $roles = [
             User::ROLE_ADMIN => 'Admin',
@@ -198,6 +208,8 @@ class UserController extends Controller
 
         if ($currentUser->isSuperAdmin()) {
             $roles = [User::ROLE_SUPER_ADMIN => 'Super Admin'] + $roles;
+        } elseif ($user->is($currentUser)) {
+            $roles = array_intersect_key($roles, [$user->role => true]);
         }
 
         return view('users.edit', compact('user', 'students', 'classrooms', 'roles'));
@@ -209,11 +221,12 @@ class UserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $currentUser = Auth::user();
-        if ($user->isSuperAdmin() && ! $currentUser->isSuperAdmin()) {
-            abort(403, 'Hanya Super Admin yang dapat mengubah akun Super Admin.');
-        }
+        $this->authorizeManage($currentUser, $user);
 
-        $allowedRoles = $currentUser->assignableRoles();
+        // An Admin cannot change their own role (it would lock them out of this page).
+        $allowedRoles = $user->is($currentUser) && ! $currentUser->isSuperAdmin()
+            ? [$user->role]
+            : $currentUser->assignableRoles();
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -256,9 +269,7 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
         }
 
-        if ($user->isSuperAdmin() && ! Auth::user()->isSuperAdmin()) {
-            abort(403, 'Hanya Super Admin yang dapat menghapus akun Super Admin.');
-        }
+        $this->authorizeManage(Auth::user(), $user);
 
         $user->delete();
 

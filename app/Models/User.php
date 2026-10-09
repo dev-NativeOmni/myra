@@ -234,6 +234,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Whether this user may edit or delete the given account. Super Admin manages everyone;
+     * an Admin manages themselves and roles below Admin, but never another Admin.
+     */
+    public function canManage(User $target): bool
+    {
+        if ($this->isSuperAdmin() || $this->is($target)) {
+            return true;
+        }
+
+        return $this->isAdmin() && ! in_array($target->role, [self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN], true);
+    }
+
+    /**
      * Roles an institution Admin may assign to accounts of their institution.
      * The single platform Super Admin is never assignable.
      *
