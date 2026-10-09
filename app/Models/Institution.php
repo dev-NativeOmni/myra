@@ -232,9 +232,17 @@ class Institution extends Model
 
         foreach ($dummyUsers as $uData) {
             $user = User::withoutGlobalScopes()->where('username', $uData['username'])->first();
+            $belongsToAnotherInstitution = $user
+                ? $user->institution_id !== $this->id
+                : User::withoutGlobalScopes()->where('email', $uData['email'])->exists();
+
+            // Different tokens can share a slug (e.g. "MIT-Q" and "MITQ"); never hijack another tenant's account.
+            if ($belongsToAnotherInstitution) {
+                continue;
+            }
+
             if ($user) {
                 $user->update([
-                    'institution_id' => $this->id,
                     'name' => $uData['name'],
                     'password' => $uData['password'],
                     'role' => $uData['role'],
@@ -274,14 +282,17 @@ class Institution extends Model
                         'classroom_id' => $classrooms[$st['class_key']]->id,
                         'name' => $st['name'],
                         'gender' => $st['gender'],
-                        'status' => 'aktif',
+                        'is_active' => true,
                     ]
                 );
             }
         }
 
         // 6. Link parent to first student
-        $parent = User::withoutGlobalScopes()->where('username', 'walimurid_'.$tokenSlug)->first();
+        $parent = User::withoutGlobalScopes()
+            ->where('institution_id', $this->id)
+            ->where('username', 'walimurid_'.$tokenSlug)
+            ->first();
         $firstChild = $this->students()->first();
         if ($parent && $firstChild) {
             $parent->children()->sync([$firstChild->id]);

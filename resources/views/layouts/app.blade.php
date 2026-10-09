@@ -104,6 +104,10 @@
             html.sidebar-unpinned #sidebar-open-button {
                 display: inline-flex;
             }
+            /* Navbar brand only appears while the sidebar (which already shows it) is hidden */
+            html.sidebar-unpinned .navbar-brand {
+                display: flex;
+            }
         }
     </style>
 </head>
@@ -162,7 +166,7 @@
                         @else
                             <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-lg text-lg shrink-0"
                                  style="background-color: {{ $tenant?->accent_color ?: '#059669' }}; box-shadow: 0 10px 15px -3px {{ ($tenant?->accent_color ?: '#059669') }}55;">
-                                {{ substr($tenant?->name ?? 'M', 0, 1) }}
+                                {{ mb_substr($tenant?->name ?? 'M', 0, 1) }}
                             </div>
                         @endif
                         <div class="min-w-0">
@@ -329,11 +333,11 @@
                             </svg>
                         </button>
                         @if($tenant?->logo_path && $tenant->imageUrl('logo_path'))
-                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-slate-200 shadow-xs p-1 shrink-0 overflow-hidden">
+                            <div class="navbar-brand lg:hidden w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-slate-200 shadow-xs p-1 shrink-0 overflow-hidden">
                                 <img src="{{ $tenant->imageUrl('logo_path') }}" alt="{{ $tenant->name }}" class="max-h-full max-w-full object-contain">
                             </div>
                         @elseif($platformLogo)
-                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-slate-200 shadow-xs p-1 shrink-0 overflow-hidden">
+                            <div class="navbar-brand lg:hidden w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-slate-200 shadow-xs p-1 shrink-0 overflow-hidden">
                                 <img src="{{ $platformLogo }}" alt="Myra" class="max-h-full max-w-full object-contain">
                             </div>
                         @endif
@@ -347,7 +351,7 @@
 
                     <div class="flex items-center gap-3 shrink-0">
                         @if($tenant && ! $isSuperAdmin)
-                            <div class="hidden sm:flex items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-slate-100/80 border border-slate-200/80 text-xs font-semibold text-slate-700">
+                            <div class="navbar-brand hidden sm:flex lg:hidden items-center gap-2 pl-2.5 pr-3 py-1 rounded-xl bg-slate-100/80 border border-slate-200/80 text-xs font-semibold text-slate-700">
                                 <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $tenant->accent_color ?: '#059669' }}"></span>
                                 <span class="truncate max-w-[160px]">{{ $tenant->name }}</span>
                             </div>

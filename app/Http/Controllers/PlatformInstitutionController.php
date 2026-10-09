@@ -146,6 +146,8 @@ class PlatformInstitutionController extends Controller
      */
     public function seedDummy(Institution $institution): RedirectResponse
     {
+        abort_if(app()->isProduction(), 404);
+
         $institution->seedDemoData();
 
         return redirect()->route('platform.institutions.index')

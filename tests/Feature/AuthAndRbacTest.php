@@ -193,9 +193,15 @@ class AuthAndRbacTest extends TestCase
 
     public function test_mitq_dummy_users_can_authenticate_under_mitq_tenant(): void
     {
-        $this->artisan('app:seed-mitq-dummy')->assertSuccessful();
+        $mitq = Institution::create([
+            'name' => 'MITQ Baitul Hikmah',
+            'token' => 'MITQ',
+            'city' => 'Sukoharjo',
+            'director_name' => 'Ust. Mudir',
+            'director_title' => 'Mudir Pesantren',
+        ]);
+        $this->artisan('app:seed-mitq-dummy', ['--password' => 'password'])->assertSuccessful();
 
-        $mitq = Institution::withoutGlobalScopes()->where('token', 'MITQ')->firstOrFail();
         TenantContext::setTenant($mitq);
 
         $testRoles = [

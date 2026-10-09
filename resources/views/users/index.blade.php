@@ -35,6 +35,7 @@
         </form>
 
         <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto" x-data="{ showImport: false }">
+            @unless(app()->isProduction())
             <form action="{{ route('users.seed-dummy') }}" method="POST"
                   onsubmit="return confirm('Buat otomatis 5 akun demo (Guru, Wali Kelas, Kesantrian, TU, Wali Murid) dan data santri contoh untuk lembaga ini?\n\nPassword default semua akun: password');">
                 @csrf
@@ -42,9 +43,10 @@
                     <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                     </svg>
-                    <span>+ Buat Akun Demo</span>
+                    <span>Buat Akun Demo</span>
                 </button>
             </form>
+            @endunless
 
             <a href="{{ route('users.export', request()->only(['role', 'search'])) }}" class="w-full md:w-auto inline-flex items-center justify-center gap-2 px-3.5 py-2.5 bg-white border border-slate-300 hover:border-slate-400 text-slate-700 rounded-xl text-xs font-semibold shadow-xs transition">
                 <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,7 +66,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
-                <span>+ Tambah Pengguna Baru</span>
+                <span>Tambah Pengguna Baru</span>
             </a>
 
             <!-- Import Modal -->

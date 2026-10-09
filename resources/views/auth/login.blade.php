@@ -23,7 +23,7 @@
             @else
                 <div class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center font-extrabold text-white text-2xl shadow-xl mb-4"
                      style="background-color: {{ $tenant?->accent_color ?: '#059669' }}; box-shadow: 0 10px 25px -5px {{ ($tenant?->accent_color ?: '#059669') }}66;">
-                    {{ substr($tenant?->name ?? 'Myra', 0, 1) }}
+                    {{ mb_substr($tenant?->name ?? 'Myra', 0, 1) }}
                 </div>
             @endif
             <h1 class="text-2xl font-bold text-white tracking-tight">{{ $tenant?->name ?? 'Myra Reporting System' }}</h1>
@@ -150,15 +150,15 @@
                     </button>
                 </div>
             </div>
+            <script>
+                function setCreds(username, password) {
+                    document.getElementById('username').value = username;
+                    document.getElementById('password').value = password;
+                }
+            </script>
             @endif
         </div>
     </div>
 
-    <script>
-        function setCreds(username, password) {
-            document.getElementById('username').value = username;
-            document.getElementById('password').value = password;
-        }
-    </script>
 </body>
 </html>

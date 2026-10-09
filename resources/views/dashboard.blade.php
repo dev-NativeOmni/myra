@@ -5,19 +5,20 @@
     <!-- Hero / Welcome Banner -->
     <div class="p-6 rounded-2xl bg-linear-to-r from-emerald-800 to-teal-900 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="relative z-10">
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-700/60 text-emerald-200 border border-emerald-500/30 mb-3">
-                {{ $institution->name ?? 'Pondok Pesantren Contoh' }} &bull; {{ $institution->city ?? 'Kota Contoh' }}
-            </span>
+            @if($institution->city)
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-700/60 text-emerald-200 border border-emerald-500/30 mb-3">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    {{ $institution->city }}
+                </span>
+            @endif
             <h2 class="text-2xl font-bold">Selamat Datang di {{ $institution->name ?? 'Portal Myra' }}</h2>
             <p class="text-emerald-100/80 text-sm mt-1 max-w-2xl">
                 Sistem Laporan Bulanan Santri modular & white-label dengan output PDF A4 presisi satu halaman standar siap cetak.
             </p>
         </div>
-        @if($institution->logo_path && $institution->imageUrl('logo_path'))
-            <div class="relative z-10 shrink-0 hidden sm:flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-white/10 backdrop-blur-md rounded-2xl p-2.5 border border-white/20 shadow-inner">
-                <img src="{{ $institution->imageUrl('logo_path') }}" alt="{{ $institution->name }}" class="max-h-full max-w-full object-contain drop-shadow-sm">
-            </div>
-        @endif
     </div>
 
     <!-- Quick Stats Cards -->

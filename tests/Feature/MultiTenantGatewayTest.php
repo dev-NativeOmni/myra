@@ -46,6 +46,15 @@ class MultiTenantGatewayTest extends TestCase
         $response->assertSee('MYRA-DEMO');
     }
 
+    public function test_gateway_super_admin_form_does_not_prefill_credentials(): void
+    {
+        $response = $this->get(route('gateway.index'));
+
+        $response->assertOk();
+        $response->assertDontSee('value="superadmin"', false);
+        $response->assertDontSee('value="password"', false);
+    }
+
     public function test_invalid_token_returns_error(): void
     {
         $response = $this->post(route('gateway.verify'), [

@@ -143,14 +143,16 @@
 
                     <footer class="flex flex-col sm:flex-row sm:items-center gap-2 pt-1">
                         <p class="flex-1 text-[11px] text-slate-400">Profil, logo, token, dan data lembaga diatur oleh admin lembaga.</p>
+                        @unless(app()->isProduction())
                         <form method="POST" action="{{ route('platform.institutions.seed-dummy', $inst) }}" class="sm:w-auto"
                               onsubmit="return confirm('Buat/isi akun demo (Guru, Walikelas, Kesantrian, TU, Walimurid) dan data santri contoh untuk {{ addslashes($inst->name) }}?\n\nPassword semua akun demo: password')">
                             @csrf
                             <button type="submit" class="w-full px-3 py-2 rounded-xl text-xs font-semibold border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 transition inline-flex items-center justify-center gap-1.5" title="Buat akun peran demo & data santri">
                                 <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                <span>+ Isi Akun Demo</span>
+                                <span>Isi Akun Demo</span>
                             </button>
                         </form>
+                        @endunless
                         <form method="POST" action="{{ route('platform.institutions.toggle', $inst) }}" class="sm:w-36"
                               onsubmit="return confirm('{{ $inst->is_active ? 'Nonaktifkan lembaga ini? Semua penggunanya tidak bisa masuk sampai diaktifkan kembali.' : 'Aktifkan kembali lembaga ini?' }}')">
                             @csrf

@@ -82,6 +82,8 @@ class UserController extends Controller
      */
     public function seedDummy(): RedirectResponse
     {
+        abort_if(app()->isProduction(), 404);
+
         $institution = Institution::current();
         if (! $institution || ! $institution->id) {
             return back()->with('error', 'Lembaga tidak ditemukan.');
