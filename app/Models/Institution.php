@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class Institution extends Model
@@ -156,6 +157,143 @@ class Institution extends Model
             'term_teacher' => self::DEFAULT_TERMS['teacher'],
             'term_class' => self::DEFAULT_TERMS['class'],
         ]);
+    }
+
+    /**
+     * Seed dummy staff, parent accounts, classrooms, and students for this institution.
+     *
+     * @return array<string, string>
+     */
+    public function seedDemoData(): array
+    {
+        $tokenSlug = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $this->token ?: 'inst'.$this->id));
+
+        // 1. Ensure default assessment fields exist
+        TenantContext::setTenant($this);
+        ModuleField::seedDefaultFields();
+
+        // 2. Ensure at least 3 classrooms
+        $targets = [
+            1 => ['juz' => 30, 'desc' => "Juz 30 (Juz 'Amma)"],
+            2 => ['juz' => 29, 'desc' => 'Juz 29 (Tabarak)'],
+            3 => ['juz' => 28, 'desc' => "Juz 28 (Qad Sami'a)"],
+        ];
+
+        $classrooms = [];
+        for ($c = 1; $c <= 3; $c++) {
+            $classrooms[$c] = Classroom::updateOrCreate(
+                ['institution_id' => $this->id, 'name' => 'Kelas '.$c],
+                [
+                    'tahfizh_days' => [1, 2, 3, 4, 5, 6],
+                    'target_juz' => $targets[$c]['juz'],
+                    'target_description' => $targets[$c]['desc'],
+                ]
+            );
+        }
+
+        // 3. Dummy Staff & Parent accounts
+        $dummyUsers = [
+            [
+                'name' => 'Ustadz Abdullah (Guru Tahfidz)',
+                'username' => 'guru_'.$tokenSlug,
+                'email' => 'guru_'.$tokenSlug.'@myra.id',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_GURU,
+            ],
+            [
+                'name' => 'Ustadz Ibrahim (Wali Kelas)',
+                'username' => 'walikelas_'.$tokenSlug,
+                'email' => 'walikelas_'.$tokenSlug.'@myra.id',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_WALI_KELAS,
+            ],
+            [
+                'name' => 'Ustadz Salman (Kesantrian)',
+                'username' => 'kesantrian_'.$tokenSlug,
+                'email' => 'kesantrian_'.$tokenSlug.'@myra.id',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_KESANTRIAN,
+            ],
+            [
+                'name' => 'Ustadzah Nurul (Tata Usaha)',
+                'username' => 'tu_'.$tokenSlug,
+                'email' => 'tu_'.$tokenSlug.'@myra.id',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_TU,
+            ],
+            [
+                'name' => 'Bapak Rahmat (Wali Santri)',
+                'username' => 'walimurid_'.$tokenSlug,
+                'email' => 'walimurid_'.$tokenSlug.'@myra.id',
+                'password' => Hash::make('password'),
+                'role' => User::ROLE_WALI_MURID,
+            ],
+        ];
+
+        foreach ($dummyUsers as $uData) {
+            $user = User::withoutGlobalScopes()->where('username', $uData['username'])->first();
+            if ($user) {
+                $user->update([
+                    'institution_id' => $this->id,
+                    'name' => $uData['name'],
+                    'password' => $uData['password'],
+                    'role' => $uData['role'],
+                ]);
+            } else {
+                User::create([
+                    'institution_id' => $this->id,
+                    ...$uData,
+                ]);
+            }
+        }
+
+        // 4. Link classroom-scoped staff to all classrooms
+        $classroomIds = collect($classrooms)->pluck('id')->all();
+        User::withoutGlobalScopes()
+            ->where('institution_id', $this->id)
+            ->whereIn('role', User::CLASSROOM_SCOPED_ROLES)
+            ->get()
+            ->each(fn (User $u) => $u->classrooms()->sync($classroomIds));
+
+        // 5. Seed sample students if less than 3 students exist
+        if ($this->students()->count() < 3) {
+            $prefixNis = strtoupper(substr($tokenSlug, 0, 4));
+            $sampleStudents = [
+                ['nis' => $prefixNis.'-001', 'name' => 'Abdurrahman Al-Fatih', 'gender' => 'L', 'class_key' => 1],
+                ['nis' => $prefixNis.'-002', 'name' => 'Muhammad Rayyan', 'gender' => 'L', 'class_key' => 1],
+                ['nis' => $prefixNis.'-003', 'name' => 'Aisyah Humaira', 'gender' => 'P', 'class_key' => 2],
+                ['nis' => $prefixNis.'-004', 'name' => 'Fatimah Az-Zahra', 'gender' => 'P', 'class_key' => 2],
+                ['nis' => $prefixNis.'-005', 'name' => 'Zaid bin Tsabit', 'gender' => 'L', 'class_key' => 3],
+                ['nis' => $prefixNis.'-006', 'name' => 'Ali Zainal Abidin', 'gender' => 'L', 'class_key' => 3],
+            ];
+
+            foreach ($sampleStudents as $st) {
+                Student::updateOrCreate(
+                    ['institution_id' => $this->id, 'nis' => $st['nis']],
+                    [
+                        'classroom_id' => $classrooms[$st['class_key']]->id,
+                        'name' => $st['name'],
+                        'gender' => $st['gender'],
+                        'status' => 'aktif',
+                    ]
+                );
+            }
+        }
+
+        // 6. Link parent to first student
+        $parent = User::withoutGlobalScopes()->where('username', 'walimurid_'.$tokenSlug)->first();
+        $firstChild = $this->students()->first();
+        if ($parent && $firstChild) {
+            $parent->children()->sync([$firstChild->id]);
+        }
+
+        return [
+            'guru' => 'guru_'.$tokenSlug,
+            'walikelas' => 'walikelas_'.$tokenSlug,
+            'kesantrian' => 'kesantrian_'.$tokenSlug,
+            'tu' => 'tu_'.$tokenSlug,
+            'walimurid' => 'walimurid_'.$tokenSlug,
+        ];
     }
 
     /**

@@ -141,6 +141,17 @@ class PlatformInstitutionController extends Controller
             ->with('success', "Status lembaga '{$institution->name}' berhasil {$statusText}.");
     }
 
+    /**
+     * Seed dummy demo accounts and sample data for the selected institution.
+     */
+    public function seedDummy(Institution $institution): RedirectResponse
+    {
+        $institution->seedDemoData();
+
+        return redirect()->route('platform.institutions.index')
+            ->with('success', "Akun demo & data santri contoh untuk lembaga '{$institution->name}' berhasil dibuat/diperbarui.");
+    }
+
     private function generateToken(string $name): string
     {
         $prefix = substr(strtoupper(Str::slug($name, '')), 0, 8);

@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/institutions', [PlatformInstitutionController::class, 'store'])->name('institutions.store');
         Route::post('/institutions/{institution}/toggle', [PlatformInstitutionController::class, 'toggle'])->name('institutions.toggle');
         Route::post('/institutions/{institution}/impersonate/{user}', [ImpersonationController::class, 'start'])->name('institutions.impersonate');
+        Route::post('/institutions/{institution}/seed-dummy', [PlatformInstitutionController::class, 'seedDummy'])->name('institutions.seed-dummy');
         Route::post('/settings/logo', [PlatformInstitutionController::class, 'updateLogo'])->name('settings.logo');
         Route::delete('/settings/logo', [PlatformInstitutionController::class, 'deleteLogo'])->name('settings.logo.delete');
     });
@@ -71,6 +72,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
         Route::get('/users/import/template', [UserController::class, 'importTemplate'])->name('users.import.template');
         Route::post('/users/import', [UserController::class, 'import'])->name('users.import');
+        Route::post('/users/seed-dummy', [UserController::class, 'seedDummy'])->name('users.seed-dummy');
         Route::resource('users', UserController::class);
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 

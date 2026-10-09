@@ -6,6 +6,7 @@ use App\Exports\UserImportTemplateExport;
 use App\Exports\UsersExport;
 use App\Imports\UsersImport;
 use App\Models\Classroom;
+use App\Models\Institution;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -74,6 +75,22 @@ class UserController extends Controller
             ->with('success', "Impor selesai: {$import->created} akun baru dibuat, {$import->updated} akun diperbarui.");
 
         return $import->rowErrors ? $redirect->withErrors($import->rowErrors) : $redirect;
+    }
+
+    /**
+     * Generate dummy demo accounts and sample data for the active institution.
+     */
+    public function seedDummy(): RedirectResponse
+    {
+        $institution = Institution::current();
+        if (! $institution || ! $institution->id) {
+            return back()->with('error', 'Lembaga tidak ditemukan.');
+        }
+
+        $institution->seedDemoData();
+
+        return redirect()->route('users.index')
+            ->with('success', 'Akun demo (Guru, Wali Kelas, Kesantrian, TU, Wali Murid) dan data santri contoh berhasil dibuat/diperbarui dengan password default: password');
     }
 
     /**

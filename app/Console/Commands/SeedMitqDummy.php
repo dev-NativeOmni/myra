@@ -274,4 +274,3 @@ class SeedMitqDummy extends Command
         return Command::SUCCESS;
     }
 }
-
