@@ -98,6 +98,16 @@
             <!-- Quick Demo Role Switcher -->
             {{-- Demo accounts are only offered on local development installs, never in production. --}}
             @if(app()->environment('local'))
+            @php
+                $isMitq = $tenant && strtoupper($tenant->token) === 'MITQ';
+                $suffix = $isMitq ? '_mitq' : '';
+                $adminUser = 'admin'.$suffix;
+                $guruUser = 'guru'.$suffix;
+                $waliKelasUser = 'walikelas'.$suffix;
+                $kesantrianUser = 'kesantrian'.$suffix;
+                $tuUser = 'tu'.$suffix;
+                $waliMuridUser = $isMitq ? 'walimurid_mitq' : 'walimurid1';
+            @endphp
             <div class="mt-6 pt-5 border-t border-slate-100">
                 <div class="flex items-center justify-between mb-3">
                     <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
@@ -111,32 +121,32 @@
                     </form>
                 </div>
                 <div class="grid grid-cols-2 gap-1.5 text-[11px]">
-                    <button type="button" onclick="setCreds('admin', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition">
+                    <button type="button" onclick="setCreds('{{ $adminUser }}', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition cursor-pointer">
                         <span class="font-bold block text-slate-800">Admin</span>
-                        <span class="text-[10px] text-slate-400 font-mono">admin</span>
+                        <span class="text-[10px] text-slate-400 font-mono">{{ $adminUser }}</span>
                     </button>
-                    <button type="button" onclick="setCreds('guru', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition">
+                    <button type="button" onclick="setCreds('{{ $guruUser }}', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition cursor-pointer">
                         <span class="font-bold block text-slate-800">Guru Tahfidz</span>
-                        <span class="text-[10px] text-slate-400 font-mono">guru</span>
+                        <span class="text-[10px] text-slate-400 font-mono">{{ $guruUser }}</span>
                     </button>
-                    <button type="button" onclick="setCreds('walikelas', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition">
+                    <button type="button" onclick="setCreds('{{ $waliKelasUser }}', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition cursor-pointer">
                         <span class="font-bold block text-slate-800">Wali Kelas</span>
-                        <span class="text-[10px] text-slate-400 font-mono">walikelas</span>
+                        <span class="text-[10px] text-slate-400 font-mono">{{ $waliKelasUser }}</span>
                     </button>
-                    <button type="button" onclick="setCreds('kesantrian', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition">
+                    <button type="button" onclick="setCreds('{{ $kesantrianUser }}', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition cursor-pointer">
                         <span class="font-bold block text-slate-800">Kesantrian</span>
-                        <span class="text-[10px] text-slate-400 font-mono">kesantrian</span>
+                        <span class="text-[10px] text-slate-400 font-mono">{{ $kesantrianUser }}</span>
                     </button>
-                    <button type="button" onclick="setCreds('tu', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition">
+                    <button type="button" onclick="setCreds('{{ $tuUser }}', 'password')" class="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200/80 text-left transition cursor-pointer">
                         <span class="font-bold block text-slate-800">TU / Keuangan</span>
-                        <span class="text-[10px] text-slate-400 font-mono">tu</span>
+                        <span class="text-[10px] text-slate-400 font-mono">{{ $tuUser }}</span>
                     </button>
-                    <button type="button" onclick="setCreds('walimurid1', 'password')" class="col-span-2 p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-left transition">
+                    <button type="button" onclick="setCreds('{{ $waliMuridUser }}', 'password')" class="col-span-2 p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-left transition cursor-pointer">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold block">Wali Murid (Orang Tua Santri 1)</span>
-                            <span class="text-[10px] bg-emerald-200/60 px-2 py-0.5 rounded-sm text-emerald-800 font-mono font-bold">walimurid1</span>
+                            <span class="font-bold block">Wali Murid</span>
+                            <span class="text-[10px] bg-emerald-200/60 px-2 py-0.5 rounded-sm text-emerald-800 font-mono font-bold">{{ $waliMuridUser }}</span>
                         </div>
-                        <span class="text-[10px] text-emerald-700 block mt-0.5">Tersedia akun <code class="font-mono font-bold">walimurid1</code> s/d <code class="font-mono font-bold">walimurid10</code> (Password: password)</span>
+                        <span class="text-[10px] text-emerald-700 block mt-0.5">Password: <code class="font-mono font-bold">password</code></span>
                     </button>
                 </div>
             </div>

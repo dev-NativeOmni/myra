@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Institution;
 use App\Models\MonthlyReport;
 use App\Models\User;
+use App\Services\TenantContext;
 use Database\Seeders\SampleDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -187,5 +189,32 @@ class AuthAndRbacTest extends TestCase
         $loginResponse->assertOk();
         $loginResponse->assertSee($institution->name);
         $loginResponse->assertSee($institution->token);
+    }
+
+    public function test_mitq_dummy_users_can_authenticate_under_mitq_tenant(): void
+    {
+        $this->artisan('app:seed-mitq-dummy')->assertSuccessful();
+
+        $mitq = Institution::withoutGlobalScopes()->where('token', 'MITQ')->firstOrFail();
+        TenantContext::setTenant($mitq);
+
+        $testRoles = [
+            'admin_mitq' => route('dashboard'),
+            'guru_mitq' => route('modules.tahfidz'),
+            'walikelas_mitq' => route('modules.akademik'),
+            'kesantrian_mitq' => route('modules.kesantrian'),
+            'tu_mitq' => route('modules.administrasi'),
+            'walimurid_mitq' => route('parent.dashboard'),
+        ];
+
+        foreach ($testRoles as $username => $expectedRedirect) {
+            $response = $this->post(route('login.post'), [
+                'username' => $username,
+                'password' => 'password',
+            ]);
+
+            $response->assertRedirect($expectedRedirect);
+            $this->post(route('logout'));
+        }
     }
 }
