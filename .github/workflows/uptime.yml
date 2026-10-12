@@ -1,7 +1,9 @@
 name: Uptime Check
 
-# Checks the production health endpoint every 30 minutes. When it fails, an issue
-# is opened (GitHub emails the repository owner); it is closed again on recovery.
+# Checks the production health endpoint every 30 minutes. When it goes down, an issue
+# is opened (GitHub emails the repository owner) and that run fails once; later runs
+# during the same outage stay green so the inbox gets one alert per incident, not one
+# every half hour. The issue is closed again on recovery.
 on:
   schedule:
     - cron: '*/30 * * * *'
@@ -10,10 +12,15 @@ on:
 permissions:
   issues: write
 
+concurrency:
+  group: uptime-check
+  cancel-in-progress: false
+
 jobs:
   check:
     if: vars.DEPLOY_ENABLED == 'true' && vars.PRODUCTION_URL != ''
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
@@ -24,20 +31,34 @@ jobs:
       - name: Check health endpoint
         id: health
         run: |
-          if curl -fsS --max-time 20 --retry 3 --retry-delay 10 --retry-all-errors -o /dev/null "$HEALTH_URL"; then
+          # Serverless cold starts can take a few seconds, so allow retries before calling it down.
+          status=$(curl -sS -o body.txt -w '%{http_code}' --max-time 20 --retry 3 --retry-delay 10 --retry-all-errors "$HEALTH_URL" || true)
+          echo "status=${status:-000}" >> "$GITHUB_OUTPUT"
+          if [ "$status" = "200" ]; then
             echo "up=true" >> "$GITHUB_OUTPUT"
           else
             echo "up=false" >> "$GITHUB_OUTPUT"
+            if grep -q 'DEPLOYMENT_NOT_FOUND' body.txt 2>/dev/null; then
+              echo "hint=Domain ini tidak lagi terhubung ke deployment Vercel mana pun. Perbarui repository variable PRODUCTION_URL ke domain production yang aktif." >> "$GITHUB_OUTPUT"
+            else
+              echo "hint=Periksa log di dashboard Vercel." >> "$GITHUB_OUTPUT"
+            fi
           fi
+          echo "HTTP $status dari $HEALTH_URL"
 
-      - name: Open an issue when the site is down
+      - name: Open an issue when the site goes down
         if: steps.health.outputs.up == 'false'
+        env:
+          STATUS: ${{ steps.health.outputs.status }}
+          HINT: ${{ steps.health.outputs.hint }}
         run: |
           open_issue=$(gh issue list --state open --search "in:title \"$ISSUE_TITLE\"" --json number -q '.[0].number')
-          if [ -z "$open_issue" ]; then
-            gh issue create --title "$ISSUE_TITLE" \
-              --body "Pemeriksaan otomatis ke $HEALTH_URL gagal pada $(TZ=Asia/Jakarta date '+%d %B %Y %H:%M') WIB (3 kali percobaan). Periksa log di dashboard Vercel."
+          if [ -n "$open_issue" ]; then
+            echo "Masih down (HTTP $STATUS); issue #$open_issue sudah terbuka, tidak mengirim notifikasi lagi."
+            exit 0
           fi
+          gh issue create --title "$ISSUE_TITLE" \
+            --body "Pemeriksaan otomatis ke $HEALTH_URL gagal (HTTP $STATUS) pada $(TZ=Asia/Jakarta date '+%d %B %Y %H:%M') WIB setelah 3 kali percobaan. $HINT"
           exit 1
 
       - name: Close the issue once the site is back

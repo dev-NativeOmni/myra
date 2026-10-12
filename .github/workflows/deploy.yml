@@ -13,10 +13,13 @@ concurrency:
 env:
   PHP_VERSION: '8.5'
   NODE_VERSION: '24'
+  # Pinned so a new CLI release cannot break a deploy overnight; bump deliberately.
+  VERCEL_CLI_VERSION: '63.1.0'
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     # Tests run on Postgres, the same database engine as production (Supabase).
     services:
@@ -52,13 +55,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install dependencies
-        run: |
-          composer install --no-interaction --prefer-dist --no-progress
-          npm ci
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
 
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # Fails fast on formatting before spending time on npm and the test suite.
+      # Run `vendor/bin/pint --dirty` locally before pushing to avoid this.
       - name: Check code style
         run: vendor/bin/pint --test
+
+      - name: Install JS dependencies
+        run: npm ci
 
       - name: Build assets
         run: npm run build
@@ -74,6 +87,7 @@ jobs:
     # Deploy only from main, and only once Vercel and Supabase are set up (repo variable DEPLOY_ENABLED=true).
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: production
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -93,10 +107,18 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
       - name: Install dependencies
         run: |
           composer install --no-interaction --prefer-dist --no-progress --no-dev --ignore-platform-req=ext-gd
           npm ci
+          npm install --global "vercel@${VERCEL_CLI_VERSION}"
 
       - name: Run database migrations
         env:
@@ -110,6 +132,13 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
-          npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
-          npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+      # Catches a deploy that went live but cannot boot (missing env var, bad config).
+      - name: Smoke test production
+        if: vars.PRODUCTION_URL != ''
+        env:
+          HEALTH_URL: ${{ vars.PRODUCTION_URL }}/up
+        run: curl -fsS --max-time 20 --retry 5 --retry-delay 10 --retry-all-errors -o /dev/null "$HEALTH_URL"
