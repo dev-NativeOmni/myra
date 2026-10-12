@@ -179,27 +179,27 @@ class SeedDemoInstitution extends Command
      */
     private function seedStudents(Institution $institution, array $classrooms): array
     {
+        $prefix = $this->nisPrefix($institution);
+        $existing = Student::query()
+            ->where('institution_id', $institution->id)
+            ->whereIn('nis', collect(self::STUDENTS)->map(fn (array $data) => $prefix.'-'.$data['nis']))
+            ->get()
+            ->keyBy('nis');
+
         $students = [];
 
         foreach (self::STUDENTS as $data) {
-            $student = Student::firstOrCreate(
-                ['institution_id' => $institution->id, 'nis' => $this->nisPrefix($institution).'-'.$data['nis']],
-                [
-                    'name' => $data['name'],
-                    'gender' => $data['gender'],
-                    'classroom_id' => $classrooms[$data['classroom']]->id,
-                    'is_active' => true,
-                ],
-            );
+            $nis = $prefix.'-'.$data['nis'];
+            $student = $existing->get($nis) ?? new Student(['institution_id' => $institution->id, 'nis' => $nis, 'name' => $data['name']]);
 
             if ($student->name !== $data['name']) {
-                $this->warn("NIS {$student->nis} sudah dipakai santri '{$student->name}', dilewati.");
+                $this->warn("NIS {$nis} sudah dipakai santri '{$student->name}', dilewati.");
 
                 continue;
             }
 
             // Demo students moved by visitors are put back in their class on the next refresh.
-            $student->update(['classroom_id' => $classrooms[$data['classroom']]->id, 'gender' => $data['gender'], 'is_active' => true]);
+            $student->fill(['classroom_id' => $classrooms[$data['classroom']]->id, 'gender' => $data['gender'], 'is_active' => true])->save();
 
             $students[$data['nis']] = ['model' => $student, 'profile' => $data['profile'], 'classroom' => $data['classroom']];
         }
@@ -258,7 +258,9 @@ class SeedDemoInstitution extends Command
     }
 
     /**
-     * Fill the last four weeks of halaqah days with attendance, ziyadah, and muraja'ah entries.
+     * Rebuild the last four weeks of halaqah days with attendance, ziyadah, and muraja'ah entries.
+     * Entries in that window are replaced wholesale (bulk insert), which keeps the nightly refresh
+     * fast over a remote database and also resets whatever demo visitors changed.
      *
      * @param  array<string, array{model: Student, profile: string, classroom: string}>  $students
      * @param  array<string, Classroom>  $classrooms
@@ -267,11 +269,13 @@ class SeedDemoInstitution extends Command
     private function seedJournals(Institution $institution, array $students, array $classrooms, array $accounts): void
     {
         $today = CarbonImmutable::today();
+        $now = now();
+        $journalModel = new TahfidzJournal;
+        $rows = [];
         $studentIndex = 0;
 
         foreach ($students as $student) {
             $classroomData = self::CLASSROOMS[$student['classroom']];
-            $teacherId = ($accounts[$classroomData['teacher']] ?? null)?->id;
             $tahfizhDays = $classrooms[$student['classroom']]->tahfizh_days ?: [1, 2, 3, 4, 5, 6];
             $surahs = $classroomData['surahs'];
             $sessionIndex = 0;
@@ -284,11 +288,19 @@ class SeedDemoInstitution extends Command
                 }
 
                 $attendance = $this->attendanceFor($student['profile'], $sessionIndex, $studentIndex);
-                $base = ['institution_id' => $institution->id, 'teacher_id' => $teacherId, 'attendance' => $attendance];
+                $base = [
+                    'institution_id' => $institution->id,
+                    'student_id' => $student['model']->id,
+                    'teacher_id' => ($accounts[$classroomData['teacher']] ?? null)?->id,
+                    'date' => $journalModel->fromDateTime($date),
+                    'attendance' => $attendance,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
 
                 if ($attendance !== 'hadir') {
-                    $this->saveJournal($student['model'], $date, 'ziyadah', [...$base, 'juz' => null, 'surah_id' => null, 'surah' => null, 'ayah_start' => null, 'ayah_end' => null,
-                        'page_count' => null, 'score' => null, 'grade' => null, 'status' => null, 'notes' => 'Presensi: '.ucfirst($attendance)]);
+                    $rows[] = [...$base, 'type' => 'ziyadah', 'juz' => null, 'surah_id' => null, 'surah' => null, 'ayah_start' => null, 'ayah_end' => null,
+                        'page_count' => null, 'score' => null, 'grade' => null, 'status' => null, 'notes' => 'Presensi: '.ucfirst($attendance)];
                     $sessionIndex++;
 
                     continue;
@@ -296,11 +308,11 @@ class SeedDemoInstitution extends Command
 
                 $surah = SurahHelper::find($surahs[($studentIndex + $sessionIndex) % count($surahs)]);
                 $score = $this->scoreFor($student['profile'], $sessionIndex + $studentIndex);
-                $this->saveJournal($student['model'], $date, 'ziyadah', [...$base, ...$this->setoran($surah, $score, min($surah['total_ayah'], 5 + ($sessionIndex % 3) * 5))]);
+                $rows[] = [...$base, 'type' => 'ziyadah', ...$this->setoran($surah, $score, min($surah['total_ayah'], 5 + ($sessionIndex % 3) * 5))];
 
                 if ($sessionIndex % 3 === 2) {
                     $reviewSurah = SurahHelper::find($surahs[($studentIndex + $sessionIndex - 2) % count($surahs)]);
-                    $this->saveJournal($student['model'], $date, 'murajaah', [...$base, ...$this->setoran($reviewSurah, min(100, $score + 4), $reviewSurah['total_ayah'])]);
+                    $rows[] = [...$base, 'type' => 'murajaah', ...$this->setoran($reviewSurah, min(100, $score + 4), $reviewSurah['total_ayah'])];
                 }
 
                 $sessionIndex++;
@@ -308,22 +320,15 @@ class SeedDemoInstitution extends Command
 
             $studentIndex++;
         }
-    }
 
-    /**
-     * Upsert one journal entry; the date column is cast, so it must be matched with whereDate.
-     *
-     * @param  array<string, mixed>  $attributes
-     */
-    private function saveJournal(Student $student, CarbonImmutable $date, string $type, array $attributes): void
-    {
-        $journal = TahfidzJournal::query()
-            ->where('student_id', $student->id)
-            ->whereDate('date', $date)
-            ->where('type', $type)
-            ->first() ?? new TahfidzJournal(['student_id' => $student->id, 'date' => $date->toDateString(), 'type' => $type]);
+        TahfidzJournal::query()
+            ->whereIn('student_id', collect($students)->map(fn (array $student) => $student['model']->id)->values())
+            ->whereDate('date', '>=', $today->subDays(self::JOURNAL_DAYS))
+            ->delete();
 
-        $journal->fill($attributes)->save();
+        foreach (array_chunk($rows, 200) as $chunk) {
+            TahfidzJournal::query()->insert($chunk);
+        }
     }
 
     /**
@@ -393,14 +398,24 @@ class SeedDemoInstitution extends Command
             [$currentMonth, 'draft'],
         ];
 
+        $reports = MonthlyReport::query()
+            ->whereIn('student_id', collect($students)->map(fn (array $student) => $student['model']->id)->values())
+            ->get()
+            ->keyBy(fn (MonthlyReport $report) => $report->student_id.'|'.$report->period_title);
+        $records = ReportRecord::query()->whereIn('monthly_report_id', $reports->pluck('id'))->get()->keyBy('monthly_report_id');
+
         $studentIndex = 0;
 
         foreach ($students as $student) {
             foreach ($periods as $periodIndex => [$month, $status]) {
-                $report = MonthlyReport::updateOrCreate(
-                    ['institution_id' => $institution->id, 'student_id' => $student['model']->id, 'period_title' => mb_strtoupper($month->translatedFormat('F Y'))],
-                    ['report_date' => $month->endOfMonth()->toDateString(), 'cutoff_date' => $month->endOfMonth()->subDays(2)->toDateString(), 'status' => $status],
-                );
+                $periodTitle = mb_strtoupper($month->translatedFormat('F Y'));
+                $report = $reports->get($student['model']->id.'|'.$periodTitle)
+                    ?? new MonthlyReport(['institution_id' => $institution->id, 'student_id' => $student['model']->id, 'period_title' => $periodTitle]);
+                $report->fill([
+                    'report_date' => $month->endOfMonth()->toDateString(),
+                    'cutoff_date' => $month->endOfMonth()->subDays(2)->toDateString(),
+                    'status' => $status,
+                ])->save();
 
                 $isComplete = $status === 'published' || $studentIndex % 3 === 0;
                 $values = $this->reportValues($student, $month, $periodIndex, $studentIndex);
@@ -412,7 +427,7 @@ class SeedDemoInstitution extends Command
                         : ['is_baligh' => $values['is_baligh']];
                 }
 
-                ReportRecord::updateOrCreate(['monthly_report_id' => $report->id], $values);
+                ($records->get($report->id) ?? new ReportRecord(['monthly_report_id' => $report->id]))->fill($values)->save();
             }
 
             $studentIndex++;

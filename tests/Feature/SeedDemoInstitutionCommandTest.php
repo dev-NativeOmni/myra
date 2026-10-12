@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\TahfidzJournal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -111,5 +112,21 @@ class SeedDemoInstitutionCommandTest extends TestCase
             ->assertOk()
             ->assertSee('Umar Faruq Hakim')
             ->assertSee('Yusuf Habibullah');
+    }
+
+    public function test_refresh_stays_within_a_small_number_of_queries(): void
+    {
+        // Production runs from GitHub Actions against a remote database, where each query costs a
+        // round trip; per-row writes once made a nightly refresh take ten minutes.
+        $this->artisan('app:seed-demo-institution')->assertSuccessful();
+
+        $queryCount = 0;
+        DB::listen(function () use (&$queryCount): void {
+            $queryCount++;
+        });
+
+        $this->artisan('app:seed-demo-institution')->assertSuccessful();
+
+        $this->assertLessThan(150, $queryCount);
     }
 }
