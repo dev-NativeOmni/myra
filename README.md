@@ -42,8 +42,9 @@ Proyek Vercel **tidak** terhubung ke Git. Satu-satunya jalur deploy adalah workf
 | `backup.yml` | Setiap hari 01:00 WIB | `pg_dump` skema `public` + isi bucket, dienkripsi AES-256, disimpan sebagai artifact 30 hari, lalu diverifikasi bisa didekripsi |
 | `maintenance.yml` | Setiap hari 02:00 WIB | `model:prune` (log audit lama); sekaligus menjaga proyek Supabase tetap aktif |
 | `uptime.yml` | Setiap 30 menit | Cek `/up`; membuka issue saat situs mati dan menutupnya saat pulih |
+| `demo.yml` | Setiap hari 02:30 WIB | `app:seed-demo-institution`: membuat/menyegarkan lembaga fiktif token `DEMO` (akun semua peran, santri, jurnal 4 minggu terakhir, rapor) |
 
-Workflow deploy, backup, dan maintenance hanya berjalan jika repository variable `DEPLOY_ENABLED` bernilai `true`.
+Workflow deploy, backup, maintenance, dan demo hanya berjalan jika repository variable `DEPLOY_ENABLED` bernilai `true`.
 
 ### Konfigurasi
 
@@ -57,6 +58,7 @@ Repository secrets:
 | `DATABASE_MIGRATION_URL` | URL Supabase **session pooler** (port 5432), untuk migrasi dan backup |
 | `AWS_ENDPOINT`, `AWS_DEFAULT_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_BUCKET` | Supabase Storage (S3), untuk backup file |
 | `BACKUP_PASSPHRASE` | Kunci enkripsi backup. Simpan salinannya di password manager; secret GitHub tidak bisa dibaca ulang |
+| `DEMO_PASSWORD` | Kata sandi semua akun lembaga `DEMO` (`admin_demo`, `guru_demo`, `guru2_demo`, `walikelas_demo`, `kesantrian_demo`, `tu_demo`, `walimurid_demo`, `walimurid2_demo`) |
 
 Environment variables di Vercel: `APP_NAME`, `APP_KEY`, `APP_URL`, `DB_URL` (Supabase **transaction pooler**, port 6543), `AWS_*`, dan `AWS_URL` (`https://<ref>.supabase.co/storage/v1/object/public/taqreer`). Nilai non-rahasia lainnya ada di [`api/index.php`](api/index.php).
 

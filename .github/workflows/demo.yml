@@ -1,0 +1,56 @@
+name: Refresh Demo Institution
+
+# Creates (first run) and refreshes the fictional DEMO institution in production:
+# demo accounts, students, the last four weeks of tahfidz journals, and monthly
+# reports. Runs nightly so the journals and early-warning board stay current, and
+# restores demo accounts/students that visitors changed. Demo account passwords
+# come from the DEMO_PASSWORD secret (masked in the public logs).
+on:
+  schedule:
+    - cron: '30 19 * * *' # 02:30 WIB, after Daily Maintenance
+  workflow_dispatch:
+
+concurrency:
+  group: demo-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, dom, zip, intl, pdo_pgsql
+          coverage: none
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev --ignore-platform-req=ext-gd
+
+      - name: Seed the DEMO institution
+        env:
+          DB_CONNECTION: pgsql
+          DB_URL: ${{ secrets.DATABASE_MIGRATION_URL }}
+          DB_SSLMODE: require
+          CACHE_STORE: array
+          APP_LOCALE: id
+          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+        run: |
+          if [ -z "$DEMO_PASSWORD" ]; then
+            echo "::error::Secret DEMO_PASSWORD belum diatur."
+            exit 1
+          fi
+          php artisan app:seed-demo-institution --password="$DEMO_PASSWORD" --no-interaction

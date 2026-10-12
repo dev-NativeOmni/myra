@@ -21,16 +21,16 @@ class TenantGatewayController extends Controller
         }
 
         $currentTenant = null;
-        $sampleInstitutions = collect();
+        $demoInstitution = null;
 
         try {
             $currentTenant = TenantContext::getTenant();
-            $sampleInstitutions = Institution::where('is_active', true)->take(6)->get();
+            $demoInstitution = Institution::where('token', Institution::DEMO_TOKEN)->where('is_active', true)->first();
         } catch (\Throwable $e) {
             // Graceful fallback
         }
 
-        return view('gateway.index', compact('currentTenant', 'sampleInstitutions'));
+        return view('gateway.index', compact('currentTenant', 'demoInstitution'));
     }
 
     /**

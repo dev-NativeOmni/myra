@@ -99,14 +99,14 @@
             {{-- Demo accounts are only offered on local development installs, never in production. --}}
             @if(app()->environment('local'))
             @php
-                $isMitq = $tenant && strtoupper($tenant->token) === 'MITQ';
-                $suffix = $isMitq ? '_mitq' : '';
+                $isDemo = $tenant && strtoupper($tenant->token) === \App\Models\Institution::DEMO_TOKEN;
+                $suffix = $isDemo ? '_demo' : '';
                 $adminUser = 'admin'.$suffix;
                 $guruUser = 'guru'.$suffix;
                 $waliKelasUser = 'walikelas'.$suffix;
                 $kesantrianUser = 'kesantrian'.$suffix;
                 $tuUser = 'tu'.$suffix;
-                $waliMuridUser = $isMitq ? 'walimurid_mitq' : 'walimurid1';
+                $waliMuridUser = $isDemo ? 'walimurid_demo' : 'walimurid1';
             @endphp
             <div class="mt-6 pt-5 border-t border-slate-100">
                 <div class="flex items-center justify-between mb-3">

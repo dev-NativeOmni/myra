@@ -191,26 +191,20 @@ class AuthAndRbacTest extends TestCase
         $loginResponse->assertSee($institution->token);
     }
 
-    public function test_mitq_dummy_users_can_authenticate_under_mitq_tenant(): void
+    public function test_demo_institution_accounts_can_authenticate_under_demo_tenant(): void
     {
-        $mitq = Institution::create([
-            'name' => 'MITQ Baitul Hikmah',
-            'token' => 'MITQ',
-            'city' => 'Sukoharjo',
-            'director_name' => 'Ust. Mudir',
-            'director_title' => 'Mudir Pesantren',
-        ]);
-        $this->artisan('app:seed-mitq-dummy', ['--password' => 'password'])->assertSuccessful();
+        $this->artisan('app:seed-demo-institution', ['--password' => 'password'])->assertSuccessful();
 
-        TenantContext::setTenant($mitq);
+        $demo = Institution::where('token', Institution::DEMO_TOKEN)->firstOrFail();
+        TenantContext::setTenant($demo);
 
         $testRoles = [
-            'admin_mitq' => route('dashboard'),
-            'guru_mitq' => route('modules.tahfidz'),
-            'walikelas_mitq' => route('modules.akademik'),
-            'kesantrian_mitq' => route('modules.kesantrian'),
-            'tu_mitq' => route('modules.administrasi'),
-            'walimurid_mitq' => route('parent.dashboard'),
+            'admin_demo' => route('dashboard'),
+            'guru_demo' => route('modules.tahfidz'),
+            'walikelas_demo' => route('modules.akademik'),
+            'kesantrian_demo' => route('modules.kesantrian'),
+            'tu_demo' => route('modules.administrasi'),
+            'walimurid_demo' => route('parent.dashboard'),
         ];
 
         foreach ($testRoles as $username => $expectedRedirect) {

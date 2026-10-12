@@ -43,7 +43,23 @@ class MultiTenantGatewayTest extends TestCase
         $response = $this->get(route('gateway.index'));
         $response->assertOk();
         $response->assertSee('Myra Multi-Tenant');
-        $response->assertSee('MYRA-DEMO');
+    }
+
+    public function test_gateway_offers_the_demo_institution_shortcut_only_when_it_is_active(): void
+    {
+        $this->get(route('gateway.index'))->assertDontSee(route('gateway.direct', Institution::DEMO_TOKEN));
+
+        $demo = Institution::create([
+            'name' => 'Pesantren Demo',
+            'token' => Institution::DEMO_TOKEN,
+            'city' => 'Kota Demo',
+            'director_name' => 'Ust. Demo',
+            'director_title' => 'Mudir',
+        ]);
+        $this->get(route('gateway.index'))->assertSee(route('gateway.direct', Institution::DEMO_TOKEN));
+
+        $demo->update(['is_active' => false]);
+        $this->get(route('gateway.index'))->assertDontSee(route('gateway.direct', Institution::DEMO_TOKEN));
     }
 
     public function test_gateway_super_admin_form_does_not_prefill_credentials(): void

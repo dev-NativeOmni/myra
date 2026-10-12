@@ -18,25 +18,40 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-class SeedMitqDummy extends Command
+class SeedDemoInstitution extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:seed-mitq-dummy
-                            {--token=MITQ : Token of the existing institution to fill}
-                            {--password= : Password for every dummy account (random when omitted)}';
+    protected $signature = 'app:seed-demo-institution
+                            {--password= : Password for every demo account (random when omitted)}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Fill an existing institution (default MITQ) with dummy accounts, students, tahfidz journals, and monthly reports';
+    protected $description = 'Create or refresh the fictional DEMO institution with accounts, students, tahfidz journals, and monthly reports';
 
     private const JOURNAL_DAYS = 28;
+
+    /**
+     * Fictional profile, only applied when the DEMO institution is first created.
+     *
+     * @var array<string, string>
+     */
+    private const PROFILE = [
+        'name' => 'Pondok Pesantren Daarul Ilmi',
+        'sub_title' => "Tahfidzul Qur'an & Pendidikan Karakter",
+        'city' => 'Kota Harapan',
+        'address' => 'Jl. Pesantren Indah No. 1, Kota Harapan',
+        'phone' => '0800-0000-0000',
+        'director_name' => 'Ust. Ahmad Fauzi, Lc., M.Pd.',
+        'director_title' => 'Mudir Pesantren',
+        'accent_color' => '#059669',
+    ];
 
     /**
      * Classrooms with their tahfidz target and the surahs (ascending order of memorisation) taught there.
@@ -47,10 +62,11 @@ class SeedMitqDummy extends Command
         'Kelas 1' => ['juz' => 30, 'description' => "Juz 30 (Juz 'Amma)", 'surahs' => [114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93], 'teacher' => 'guru'],
         'Kelas 2' => ['juz' => 29, 'description' => 'Juz 29 (Tabarak)', 'surahs' => [67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77], 'teacher' => 'guru'],
         'Kelas 3' => ['juz' => 28, 'description' => "Juz 28 (Qad Sami'a)", 'surahs' => [58, 59, 60, 61, 62, 63, 64, 65, 66], 'teacher' => 'guru2'],
+        'Kelas 4' => ['juz' => 27, 'description' => 'Juz 27 (Qala Fama Khatbukum)', 'surahs' => [52, 53, 54, 55, 56, 57], 'teacher' => 'guru2'],
     ];
 
     /**
-     * Dummy students. Profile drives journal scores, attendance, and report values so every
+     * Demo students. Profile drives journal scores, attendance, and report values so every
      * screen (analytics early warning, completeness, parent portal) has something to show.
      *
      * @var list<array{nis: string, name: string, gender: string, classroom: string, profile: string}>
@@ -71,19 +87,28 @@ class SeedMitqDummy extends Command
         ['nis' => '013', 'name' => 'Salman Al-Farisi', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'good'],
         ['nis' => '014', 'name' => 'Yusuf Habibullah', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'struggling'],
         ['nis' => '015', 'name' => 'Ruqayyah Azzahra', 'gender' => 'P', 'classroom' => 'Kelas 3', 'profile' => 'excellent'],
+        ['nis' => '016', 'name' => 'Hasan Al-Bashri', 'gender' => 'L', 'classroom' => 'Kelas 1', 'profile' => 'good'],
+        ['nis' => '017', 'name' => 'Sumayyah Nabila', 'gender' => 'P', 'classroom' => 'Kelas 2', 'profile' => 'excellent'],
+        ['nis' => '018', 'name' => 'Ibrahim Khalilullah', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'good'],
+        ['nis' => '019', 'name' => 'Abdullah Faqih', 'gender' => 'L', 'classroom' => 'Kelas 4', 'profile' => 'excellent'],
+        ['nis' => '020', 'name' => 'Asma Nadhira', 'gender' => 'P', 'classroom' => 'Kelas 4', 'profile' => 'good'],
+        ['nis' => '021', 'name' => 'Mush\'ab Ramadhan', 'gender' => 'L', 'classroom' => 'Kelas 4', 'profile' => 'struggling'],
+        ['nis' => '022', 'name' => 'Hafshah Qonita', 'gender' => 'P', 'classroom' => 'Kelas 4', 'profile' => 'good'],
+        ['nis' => '023', 'name' => 'Thariq Ziyad', 'gender' => 'L', 'classroom' => 'Kelas 4', 'profile' => 'absent'],
+        ['nis' => '024', 'name' => 'Ummu Kultsum', 'gender' => 'P', 'classroom' => 'Kelas 4', 'profile' => 'excellent'],
     ];
 
     /**
-     * Dummy accounts keyed by username prefix (the suffix is the lower-cased token).
+     * Demo accounts keyed by username prefix (the suffix is the lower-cased token).
      *
      * @var array<string, array{name: string, role: string, classrooms?: list<string>, children?: list<string>}>
      */
     private const ACCOUNTS = [
         'admin' => ['name' => 'Ustadz Hanif (Admin Demo)', 'role' => User::ROLE_ADMIN],
         'guru' => ['name' => 'Ustadz Abdullah (Guru Tahfidz)', 'role' => User::ROLE_GURU, 'classrooms' => ['Kelas 1', 'Kelas 2']],
-        'guru2' => ['name' => 'Ustadz Harun (Guru Tahfidz)', 'role' => User::ROLE_GURU, 'classrooms' => ['Kelas 3']],
-        'walikelas' => ['name' => 'Ustadz Ibrahim (Wali Kelas)', 'role' => User::ROLE_WALI_KELAS, 'classrooms' => ['Kelas 1', 'Kelas 2', 'Kelas 3']],
-        'kesantrian' => ['name' => 'Ustadz Salman (Kesantrian)', 'role' => User::ROLE_KESANTRIAN, 'classrooms' => ['Kelas 1', 'Kelas 2', 'Kelas 3']],
+        'guru2' => ['name' => 'Ustadz Harun (Guru Tahfidz)', 'role' => User::ROLE_GURU, 'classrooms' => ['Kelas 3', 'Kelas 4']],
+        'walikelas' => ['name' => 'Ustadz Ibrahim (Wali Kelas)', 'role' => User::ROLE_WALI_KELAS, 'classrooms' => ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4']],
+        'kesantrian' => ['name' => 'Ustadz Salman (Kesantrian)', 'role' => User::ROLE_KESANTRIAN, 'classrooms' => ['Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4']],
         'tu' => ['name' => 'Ustadzah Nurul (Tata Usaha)', 'role' => User::ROLE_TU],
         'walimurid' => ['name' => 'Bapak Rahmat Hidayat (Wali Santri)', 'role' => User::ROLE_WALI_MURID, 'children' => ['001', '003']],
         'walimurid2' => ['name' => 'Ibu Siti Aminah (Wali Santri)', 'role' => User::ROLE_WALI_MURID, 'children' => ['010']],
@@ -94,19 +119,11 @@ class SeedMitqDummy extends Command
      */
     public function handle(): int
     {
-        $token = strtoupper((string) $this->option('token'));
-        $institution = Institution::where('token', $token)->first();
-
-        if (! $institution) {
-            $this->error("Lembaga dengan token {$token} tidak ditemukan. Buat lembaganya dulu lewat panel Super Admin.");
-
-            return self::FAILURE;
-        }
-
+        $institution = Institution::firstOrCreate(['token' => Institution::DEMO_TOKEN], [...self::PROFILE, 'is_active' => true]);
         $password = $this->option('password') ?: Str::password(12, symbols: false);
-        $suffix = '_'.strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $token));
+        $suffix = '_'.strtolower(Institution::DEMO_TOKEN);
 
-        $this->info("Mengisi data dummy untuk {$institution->name} ({$token})...");
+        $this->info("Mengisi lembaga demo {$institution->name} (".Institution::DEMO_TOKEN.')...');
         TenantContext::setTenant($institution);
 
         try {
@@ -127,7 +144,7 @@ class SeedMitqDummy extends Command
         }
 
         $this->newLine();
-        $this->info('Selesai. Akun dummy (semua memakai kata sandi yang sama):');
+        $this->info('Selesai. Akun demo (semua memakai kata sandi yang sama):');
         $this->table(
             ['Peran', 'Nama', 'Username', 'Kata Sandi'],
             collect($accounts)->map(fn (User $user) => [$user->role_label, $user->name, $user->username, $password])->values()->all(),
@@ -155,7 +172,7 @@ class SeedMitqDummy extends Command
     }
 
     /**
-     * Create the dummy students, skipping any NIS already used by a real student.
+     * Create the demo students, skipping any NIS already used by another student.
      *
      * @param  array<string, Classroom>  $classrooms
      * @return array<string, array{model: Student, profile: string, classroom: string}>
@@ -181,7 +198,7 @@ class SeedMitqDummy extends Command
                 continue;
             }
 
-            // Dummy students from an earlier run may sit in another class; keep them in sync.
+            // Demo students moved by visitors are put back in their class on the next refresh.
             $student->update(['classroom_id' => $classrooms[$data['classroom']]->id, 'gender' => $data['gender'], 'is_active' => true]);
 
             $students[$data['nis']] = ['model' => $student, 'profile' => $data['profile'], 'classroom' => $data['classroom']];
@@ -190,6 +207,9 @@ class SeedMitqDummy extends Command
         return $students;
     }
 
+    /**
+     * Demo NIS are prefixed with the institution token, e.g. DEMO-001.
+     */
     private function nisPrefix(Institution $institution): string
     {
         return strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $institution->token));
@@ -438,7 +458,7 @@ class SeedMitqDummy extends Command
             'adab_kedisiplinan' => $adab(3),
             'body_height_cm' => 118 + $classNumber * 6 + $studentIndex % 5,
             'body_weight_kg' => 22 + $classNumber * 3 + $studentIndex % 4,
-            'is_baligh' => $classNumber === 3 && $student['model']->gender === 'P' ? 'Sudah' : 'Belum',
+            'is_baligh' => $classNumber >= 3 && $student['model']->gender === 'P' ? 'Sudah' : 'Belum',
             'kesantrian_notes' => $profile === 'absent'
                 ? 'Beberapa kali izin dan alpa pada kegiatan asrama; sudah dikomunikasikan dengan wali santri.'
                 : 'Aktif mengikuti kegiatan asrama, menjaga kebersihan kamar, dan rajin shalat berjamaah.',

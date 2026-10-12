@@ -81,17 +81,17 @@
                 </button>
             </form>
 
-            <!-- Demo shortcut (non-production only) & alternative logins -->
+            <!-- Demo institution shortcut & alternative logins -->
             <div class="pt-4 border-t border-slate-100 space-y-2">
-                @unless(app()->isProduction())
-                <a href="{{ route('gateway.direct', 'MYRA-DEMO') }}" class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center justify-between transition border border-emerald-200">
+                @if($demoInstitution)
+                <a href="{{ route('gateway.direct', $demoInstitution->token) }}" class="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold flex items-center justify-between transition border border-emerald-200">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span>Coba Lembaga Demo (MYRA-DEMO)</span>
+                        <span>Coba Lembaga Demo ({{ $demoInstitution->token }})</span>
                     </div>
                     <span>&rarr;</span>
                 </a>
-                @endunless
+                @endif
 
                 <div class="flex items-center justify-between text-xs pt-1 px-1">
                     <a href="{{ route('login') }}" class="text-slate-500 hover:text-emerald-600 transition">
