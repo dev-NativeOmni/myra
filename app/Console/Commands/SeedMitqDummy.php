@@ -56,21 +56,21 @@ class SeedMitqDummy extends Command
      * @var list<array{nis: string, name: string, gender: string, classroom: string, profile: string}>
      */
     private const STUDENTS = [
-        ['nis' => 'MITQ-001', 'name' => 'Abdurrahman Al-Fatih', 'gender' => 'L', 'classroom' => 'Kelas 1', 'profile' => 'excellent'],
-        ['nis' => 'MITQ-002', 'name' => 'Muhammad Rayyan', 'gender' => 'L', 'classroom' => 'Kelas 1', 'profile' => 'good'],
-        ['nis' => 'MITQ-003', 'name' => 'Aisyah Humaira', 'gender' => 'P', 'classroom' => 'Kelas 2', 'profile' => 'excellent'],
-        ['nis' => 'MITQ-004', 'name' => 'Fatimah Az-Zahra', 'gender' => 'P', 'classroom' => 'Kelas 2', 'profile' => 'good'],
-        ['nis' => 'MITQ-005', 'name' => 'Zaid bin Tsabit', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'good'],
-        ['nis' => 'MITQ-006', 'name' => 'Ali Zainal Abidin', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'excellent'],
-        ['nis' => 'MITQ-007', 'name' => 'Umar Faruq Hakim', 'gender' => 'L', 'classroom' => 'Kelas 1', 'profile' => 'struggling'],
-        ['nis' => 'MITQ-008', 'name' => 'Khadijah Nur Aini', 'gender' => 'P', 'classroom' => 'Kelas 1', 'profile' => 'good'],
-        ['nis' => 'MITQ-009', 'name' => 'Maryam Shalihah', 'gender' => 'P', 'classroom' => 'Kelas 1', 'profile' => 'excellent'],
-        ['nis' => 'MITQ-010', 'name' => 'Hamzah Asadullah', 'gender' => 'L', 'classroom' => 'Kelas 2', 'profile' => 'absent'],
-        ['nis' => 'MITQ-011', 'name' => 'Bilal Rabbani', 'gender' => 'L', 'classroom' => 'Kelas 2', 'profile' => 'good'],
-        ['nis' => 'MITQ-012', 'name' => 'Zainab Kamila', 'gender' => 'P', 'classroom' => 'Kelas 2', 'profile' => 'good'],
-        ['nis' => 'MITQ-013', 'name' => 'Salman Al-Farisi', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'good'],
-        ['nis' => 'MITQ-014', 'name' => 'Yusuf Habibullah', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'struggling'],
-        ['nis' => 'MITQ-015', 'name' => 'Ruqayyah Azzahra', 'gender' => 'P', 'classroom' => 'Kelas 3', 'profile' => 'excellent'],
+        ['nis' => '001', 'name' => 'Abdurrahman Al-Fatih', 'gender' => 'L', 'classroom' => 'Kelas 1', 'profile' => 'excellent'],
+        ['nis' => '002', 'name' => 'Muhammad Rayyan', 'gender' => 'L', 'classroom' => 'Kelas 1', 'profile' => 'good'],
+        ['nis' => '003', 'name' => 'Aisyah Humaira', 'gender' => 'P', 'classroom' => 'Kelas 2', 'profile' => 'excellent'],
+        ['nis' => '004', 'name' => 'Fatimah Az-Zahra', 'gender' => 'P', 'classroom' => 'Kelas 2', 'profile' => 'good'],
+        ['nis' => '005', 'name' => 'Zaid bin Tsabit', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'good'],
+        ['nis' => '006', 'name' => 'Ali Zainal Abidin', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'excellent'],
+        ['nis' => '007', 'name' => 'Umar Faruq Hakim', 'gender' => 'L', 'classroom' => 'Kelas 1', 'profile' => 'struggling'],
+        ['nis' => '008', 'name' => 'Khadijah Nur Aini', 'gender' => 'P', 'classroom' => 'Kelas 1', 'profile' => 'good'],
+        ['nis' => '009', 'name' => 'Maryam Shalihah', 'gender' => 'P', 'classroom' => 'Kelas 1', 'profile' => 'excellent'],
+        ['nis' => '010', 'name' => 'Hamzah Asadullah', 'gender' => 'L', 'classroom' => 'Kelas 2', 'profile' => 'absent'],
+        ['nis' => '011', 'name' => 'Bilal Rabbani', 'gender' => 'L', 'classroom' => 'Kelas 2', 'profile' => 'good'],
+        ['nis' => '012', 'name' => 'Zainab Kamila', 'gender' => 'P', 'classroom' => 'Kelas 2', 'profile' => 'good'],
+        ['nis' => '013', 'name' => 'Salman Al-Farisi', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'good'],
+        ['nis' => '014', 'name' => 'Yusuf Habibullah', 'gender' => 'L', 'classroom' => 'Kelas 3', 'profile' => 'struggling'],
+        ['nis' => '015', 'name' => 'Ruqayyah Azzahra', 'gender' => 'P', 'classroom' => 'Kelas 3', 'profile' => 'excellent'],
     ];
 
     /**
@@ -85,8 +85,8 @@ class SeedMitqDummy extends Command
         'walikelas' => ['name' => 'Ustadz Ibrahim (Wali Kelas)', 'role' => User::ROLE_WALI_KELAS, 'classrooms' => ['Kelas 1', 'Kelas 2', 'Kelas 3']],
         'kesantrian' => ['name' => 'Ustadz Salman (Kesantrian)', 'role' => User::ROLE_KESANTRIAN, 'classrooms' => ['Kelas 1', 'Kelas 2', 'Kelas 3']],
         'tu' => ['name' => 'Ustadzah Nurul (Tata Usaha)', 'role' => User::ROLE_TU],
-        'walimurid' => ['name' => 'Bapak Rahmat Hidayat (Wali Santri)', 'role' => User::ROLE_WALI_MURID, 'children' => ['MITQ-001', 'MITQ-003']],
-        'walimurid2' => ['name' => 'Ibu Siti Aminah (Wali Santri)', 'role' => User::ROLE_WALI_MURID, 'children' => ['MITQ-010']],
+        'walimurid' => ['name' => 'Bapak Rahmat Hidayat (Wali Santri)', 'role' => User::ROLE_WALI_MURID, 'children' => ['001', '003']],
+        'walimurid2' => ['name' => 'Ibu Siti Aminah (Wali Santri)', 'role' => User::ROLE_WALI_MURID, 'children' => ['010']],
     ];
 
     /**
@@ -166,7 +166,7 @@ class SeedMitqDummy extends Command
 
         foreach (self::STUDENTS as $data) {
             $student = Student::firstOrCreate(
-                ['institution_id' => $institution->id, 'nis' => $data['nis']],
+                ['institution_id' => $institution->id, 'nis' => $this->nisPrefix($institution).'-'.$data['nis']],
                 [
                     'name' => $data['name'],
                     'gender' => $data['gender'],
@@ -176,7 +176,7 @@ class SeedMitqDummy extends Command
             );
 
             if ($student->name !== $data['name']) {
-                $this->warn("NIS {$data['nis']} sudah dipakai santri '{$student->name}', dilewati.");
+                $this->warn("NIS {$student->nis} sudah dipakai santri '{$student->name}', dilewati.");
 
                 continue;
             }
@@ -188,6 +188,11 @@ class SeedMitqDummy extends Command
         }
 
         return $students;
+    }
+
+    private function nisPrefix(Institution $institution): string
+    {
+        return strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $institution->token));
     }
 
     /**
