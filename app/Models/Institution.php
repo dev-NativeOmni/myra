@@ -142,6 +142,14 @@ class Institution extends Model
     }
 
     /**
+     * Whether this is the fictional demo institution, whose demo accounts allow one-click login.
+     */
+    public function isDemo(): bool
+    {
+        return strtoupper((string) $this->token) === self::DEMO_TOKEN;
+    }
+
+    /**
      * Get the active institution profile row from TenantContext or fallback to first.
      */
     public static function current(): self

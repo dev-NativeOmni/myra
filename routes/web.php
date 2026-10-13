@@ -31,6 +31,7 @@ Route::get('/portal/{token}', [TenantGatewayController::class, 'direct'])->name(
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+    Route::post('/login/demo/{username}', [AuthController::class, 'demoLogin'])->middleware('throttle:30,1')->name('login.demo');
 });
 
 // Authenticated Routes

@@ -115,6 +115,16 @@ class SeedDemoInstitution extends Command
     ];
 
     /**
+     * Usernames of the seeded demo accounts, in display order (admin first, parents last).
+     *
+     * @return list<string>
+     */
+    public static function accountUsernames(): array
+    {
+        return array_map(fn (string $prefix) => $prefix.'_'.strtolower(Institution::DEMO_TOKEN), array_keys(self::ACCOUNTS));
+    }
+
+    /**
      * Execute the console command.
      */
     public function handle(): int

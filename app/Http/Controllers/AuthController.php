@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Console\Commands\SeedDemoInstitution;
 use App\Models\ImpersonationLog;
+use App\Models\Institution;
 use App\Models\User;
 use App\Services\TenantContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,8 +30,28 @@ class AuthController extends Controller
         }
 
         $tenant = TenantContext::getTenant();
+        $demoAccounts = $tenant?->isDemo() ? $this->demoAccounts($tenant) : collect();
 
-        return view('auth.login', compact('tenant'));
+        return view('auth.login', compact('tenant', 'demoAccounts'));
+    }
+
+    /**
+     * One-click login for the seeded accounts of the fictional DEMO institution, so demo
+     * credentials never have to be shared. Every other account still needs its password.
+     */
+    public function demoLogin(Request $request, string $username): RedirectResponse
+    {
+        $demo = Institution::where('token', Institution::DEMO_TOKEN)->where('is_active', true)->first();
+        $user = $demo ? $this->demoAccounts($demo)->firstWhere('username', $username) : null;
+
+        abort_if($user === null, 404);
+
+        $request->session()->regenerate();
+        Auth::login($user);
+        TenantContext::setTenant($demo);
+
+        return $this->redirectBasedOnRole($user)
+            ->with('success', "Anda masuk ke lembaga demo sebagai {$user->name} ({$user->role_label}).");
     }
 
     /**
@@ -119,6 +142,23 @@ class AuthController extends Controller
         }
 
         return redirect()->route('login')->with('success', 'Anda telah berhasil keluar dari sistem.');
+    }
+
+    /**
+     * Seeded demo accounts of the given demo institution, in the seeder's display order.
+     *
+     * @return Collection<int, User>
+     */
+    private function demoAccounts(Institution $demo): Collection
+    {
+        $usernames = SeedDemoInstitution::accountUsernames();
+
+        return TenantContext::withoutScope(fn () => User::query()
+            ->where('institution_id', $demo->id)
+            ->whereIn('username', $usernames)
+            ->get())
+            ->sortBy(fn (User $user) => array_search($user->username, $usernames, true))
+            ->values();
     }
 
     /**

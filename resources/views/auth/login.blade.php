@@ -64,12 +64,36 @@
                 </div>
             @endif
 
+            @if($demoAccounts->isNotEmpty())
+                <!-- One-click login for the fictional DEMO institution -->
+                <div class="mb-6">
+                    <p class="text-sm font-bold text-slate-900">Masuk Cepat Akun Demo</p>
+                    <p class="text-xs text-slate-500 mt-0.5 mb-3">Pilih peran untuk langsung mencoba aplikasi, tanpa kata sandi.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        @foreach($demoAccounts as $demoAccount)
+                            <form action="{{ route('login.demo', $demoAccount->username) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-full h-full p-2.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left transition cursor-pointer group">
+                                    <span class="block text-xs font-bold text-slate-800 group-hover:text-emerald-800">{{ $demoAccount->role_label }}</span>
+                                    <span class="block text-[11px] text-slate-500 truncate">{{ $demoAccount->name }}</span>
+                                </button>
+                            </form>
+                        @endforeach
+                    </div>
+                    <div class="flex items-center gap-3 mt-5 text-[11px] text-slate-400">
+                        <span class="flex-1 h-px bg-slate-200"></span>
+                        <span>atau masuk manual</span>
+                        <span class="flex-1 h-px bg-slate-200"></span>
+                    </div>
+                </div>
+            @endif
+
             <form action="{{ route('login.post') }}" method="POST" class="space-y-4">
                 @csrf
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Nama Pengguna (Username)</label>
-                    <input type="text" name="username" id="username" value="{{ old('username') }}" required autofocus
+                    <input type="text" name="username" id="username" value="{{ old('username') }}" required @if($demoAccounts->isEmpty()) autofocus @endif
                         class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-hidden transition"
                         placeholder="Masukkan username...">
                 </div>
@@ -97,16 +121,14 @@
 
             <!-- Quick Demo Role Switcher -->
             {{-- Demo accounts are only offered on local development installs, never in production. --}}
-            @if(app()->environment('local'))
+            @if(app()->environment('local') && $demoAccounts->isEmpty())
             @php
-                $isDemo = $tenant && strtoupper($tenant->token) === \App\Models\Institution::DEMO_TOKEN;
-                $suffix = $isDemo ? '_demo' : '';
-                $adminUser = 'admin'.$suffix;
-                $guruUser = 'guru'.$suffix;
-                $waliKelasUser = 'walikelas'.$suffix;
-                $kesantrianUser = 'kesantrian'.$suffix;
-                $tuUser = 'tu'.$suffix;
-                $waliMuridUser = $isDemo ? 'walimurid_demo' : 'walimurid1';
+                $adminUser = 'admin';
+                $guruUser = 'guru';
+                $waliKelasUser = 'walikelas';
+                $kesantrianUser = 'kesantrian';
+                $tuUser = 'tu';
+                $waliMuridUser = 'walimurid1';
             @endphp
             <div class="mt-6 pt-5 border-t border-slate-100">
                 <div class="flex items-center justify-between mb-3">
